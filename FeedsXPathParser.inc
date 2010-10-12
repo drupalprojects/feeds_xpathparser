@@ -412,7 +412,7 @@ class FeedsXPathParserXML extends FeedsXPathParserBase {
  *
  * The solution is to keep track in the form how many have been added.
  */
-function feeds_xpathparser_form_feeds_ui_mapping_form_alter($form, &$form_state) {
+function feeds_xpathparser_form_feeds_ui_mapping_form_alter(&$form, &$form_state) {
   $newest_xpath_mapping = array();
   foreach ($form['#mappings'] as $mapping) {
     if (strpos($mapping['source'], 'xpathparser:') === 0) {
@@ -505,7 +505,7 @@ function _feeds_xpathparser_handle_word($word, $c ='', $axis = FALSE) {
 
   if (strpos($word, '::') !== FALSE) {
     $word = explode('::', $word, 2);
-    return $word[0] . '::' . feeds_xpathparser_parse_xpath($word[1]);
+    return $word[0] . '::' . _feeds_xpathparser_handle_word($word[1], '::', $word[0]);
   }
 
   if (is_numeric($word) || $axis == 'attribute' || strpos($word, '@') === 0 ||
