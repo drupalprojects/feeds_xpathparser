@@ -426,7 +426,6 @@ function feeds_xpathparser_form_feeds_ui_mapping_form_alter(&$form, &$form_state
     unset($form['source']['#options'][$default_source]);
     $form['source']['#options'][$a . ':' . ++$count] = $label;
   }
-  return $form;
 }
 
 /**
