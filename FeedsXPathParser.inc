@@ -100,7 +100,7 @@ class FeedsXPathParserBase extends FeedsParser {
     libxml_clear_errors();
     libxml_use_internal_errors($use_errors);
 
-    if ($error->level == LIBXML_ERR_ERROR) {
+    if (is_object($error) && $error->level == LIBXML_ERR_ERROR) {
       $orig_query = array_search($query, $this->modified_queries);
       // If we didn't modify the query then it won't be in modified_queries.
       $orig_query = $orig_query ?: $query;
