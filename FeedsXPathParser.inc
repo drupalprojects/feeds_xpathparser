@@ -287,12 +287,20 @@ class FeedsXPathParserBase extends FeedsParser {
   * Override parent::getMappingSources().
   */
   public function getMappingSources() {
-    return array(
+    $xpath_source = array(
       'xpathparser:0' => array(
         'name' => t('XPath Expression'),
         'description' => t('Allows you to configure an XPath expression that will populate this field.'),
       ),
-    ) + parent::getMappingSources();
+    );
+
+    $sources = parent::getMappingSources();
+    // Older versions of Feeds return FALSE here.
+    if (is_array($sources)) {
+      return $sources + $xpath_source;
+    }
+
+    return $xpath_source;
   }
 
   /**
