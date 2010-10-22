@@ -86,31 +86,20 @@ class FeedsXPathParserBase extends FeedsParser {
         $xml->registerXPathNamespace($prefix, $namespace);
       }
     }
-    /**
-     * Here we set libxml_use_internal_errors to TRUE because depending on the
-     * libxml version, $xml->xpath() might return FALSE or an empty array() when
-     * a query doesn't match.
-     */
-    $use_errors = libxml_use_internal_errors(TRUE);
 
-    // Perfom xpath query.
-    $results = $xml->xpath($query);
-
-    $error = libxml_get_last_error();
-    libxml_clear_errors();
-    libxml_use_internal_errors($use_errors);
+    list($results, $error) = $this->_query($xml, $query);
 
     if (is_object($error) && $error->level == LIBXML_ERR_ERROR) {
       $orig_query = array_search($query, $this->modified_queries);
       // If we didn't modify the query then it won't be in modified_queries.
-      $orig_query = $orig_query ?: $query;
+      $orig_query = $orig_query ? $orig_query : $query;
       if ($this->source_config['exp']['errors']) {
        drupal_set_message(
         t("There was an error with the XPath query: %query.<br>
           Libxml returned the message: %message, with the error code: %code.",
-          array('%query' => $orig_query,
+          array('%query'   => $orig_query,
                 '%message' => trim($error->message),
-                '%code' => $error->code)),
+                '%code'    => $error->code)),
         'error',
         FALSE);
       }
@@ -325,14 +314,34 @@ class FeedsXPathParserBase extends FeedsParser {
    * Simply trims all XPath values from the form. That way when testing them
    * later we can be sure that there aren't any strings with spaces in them.
    *
+   * @todo
+   *   validate xpath queries?
+   *
    * @param &$values
    *   The values from the form to validate, passed by reference.
    */
   public function sourceFormValidate(&$values) {
     $values['context'] = trim($values['context']);
     foreach ($values['sources'] as &$query) {
-        $query = trim($query);
+      $query = trim($query);
     }
+  }
+
+  /**
+   * Here we set libxml_use_internal_errors to TRUE because depending on the
+   * libxml version, $xml->xpath() might return FALSE or an empty array() when
+   * a query doesn't match.
+   */
+  private function _query($xml, $query) {
+    $use_errors = libxml_use_internal_errors(TRUE);
+
+    // Perfom xpath query.
+    $results = $xml->xpath($query);
+
+    $error = libxml_get_last_error();
+    libxml_clear_errors();
+    libxml_use_internal_errors($use_errors);
+    return array($results, $error);
   }
 }
 
