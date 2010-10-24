@@ -21,6 +21,14 @@ class FeedsXPathParserBase extends FeedsParser {
    */
   public function parse(FeedsImportBatch $batch, FeedsSource $source) {
     $this->source_config = $source->getConfigFor($this);
+    $mappings = feeds_importer($this->id)->processor->config['mappings'];
+    $this->mappings = array();
+    foreach ($mappings as $mapping) {
+      if (strpos($mapping['source'], 'xpathparser:') === 0) {
+        $this->mappings[$mapping['source']] = $mapping['target'];
+      }
+    }
+
     if (isset($this->source_config['rawXML']) && is_array($this->source_config['rawXML'])) {
       $this->rawXML = array_keys(array_filter($this->source_config['rawXML']));
     }
@@ -48,9 +56,11 @@ class FeedsXPathParserBase extends FeedsParser {
     unset($xml);
     $parsed_items = array();
     foreach ($all_items as $item) {
-      $parsed_item = array();
+      $parsed_item = $variables = array();
       foreach ($this->source_config['sources'] as $source => $query) {
+        $query = strtr($query, $variables);
         $parsed_item[$source] = $this->parseSourceElement($item, $query, $source);
+        $variables['$' . $this->mappings[$source]] = '"' . $parsed_item[$source] . '"';
       }
       $parsed_items[] = $parsed_item;
     }
@@ -222,7 +232,7 @@ class FeedsXPathParserBase extends FeedsParser {
       );
       $form['sources']['help']['#value'] = '<div class="help">' . theme('item_list', $items) . '</div>';
     }
-
+    $variables = array();
     foreach ($mappings as $source => $target) {
       $form['sources'][$source] = array(
         '#type'          => 'textfield',
@@ -231,6 +241,10 @@ class FeedsXPathParserBase extends FeedsParser {
         '#default_value' => isset($source_config['sources'][$source]) ? $source_config['sources'][$source] : '',
         '#maxlength'     => 1024,
       );
+      if (!empty($variables)) {
+        $form['sources'][$source]['#description'] .= '<br>' . t('The variables '. implode(', ', $variables). ' are availliable for replacement.');
+      }
+      $variables[] = '$' . $target;
     }
 
     $form['rawXML'] = array(
