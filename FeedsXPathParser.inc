@@ -59,8 +59,11 @@ class FeedsXPathParserBase extends FeedsParser {
       $parsed_item = $variables = array();
       foreach ($this->source_config['sources'] as $source => $query) {
         $query = strtr($query, $variables);
-        $parsed_item[$source] = $this->parseSourceElement($item, $query, $source);
-        $variables['$' . $this->mappings[$source]] = '"' . $parsed_item[$source] . '"';
+        $result = $this->parseSourceElement($item, $query, $source);
+        if (!is_array($result)) {
+          $variables['$' . $this->mappings[$source]] = "'$result'";
+        }
+        $parsed_item[$source] = $result;
       }
       $parsed_items[] = $parsed_item;
     }
@@ -136,8 +139,8 @@ class FeedsXPathParserBase extends FeedsParser {
    *
    */
   private function addDefaultNamespace($query) {
-    $query = feeds_xpathparser_parse_xpath($query);
-    return $query;
+    $parser = new FeedsXPathQueryParser($query);
+    return $parser->getQuery();
   }
 
   /**
@@ -258,7 +261,7 @@ class FeedsXPathParserBase extends FeedsParser {
       '#type' => 'fieldset',
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
-      '#title' => 'Experimental',
+      '#title' => 'XPath Parser Options',
     );
 
     $form['exp']['errors'] = array(
@@ -462,86 +465,122 @@ function feeds_xpathparser_form_feeds_ui_mapping_form_alter(&$form, &$form_state
 /**
  * Pseudo-parser of XPath queries.  When an XML document has a default
  * namespace this gets called so that adding the __default__ namepace where
- * appropriate. Aren't we nice.
+ * appropriate. Aren't we nice?
  *
  * @todo
- *   Make this into a class so that we can save state on the object.
- *   Write tests for this beasty.
  *   Cleanup.
  * @param $query
  *   An xpath query string.
  * @return string
  *   An xpath query string with the __default__ namespace added.
  */
-function feeds_xpathparser_parse_xpath($query) {
-  $query = preg_replace('/\s+\(\s*/', '(', $query);
-  $word_boundary = array('[', ']', '=', '(', ')', '.', '<', '>', '*', '!', '|', '/', ',', ' ');
-  $in_quotes = FALSE;
-  $quote_char = '';
-  $word = '';
-  $output = '';
-  $prev_boundary = '';
+class FeedsXPathQueryParser {
+  function __construct($query) {
+    $this->query = preg_replace('/\s+\(\s*/', '(', $query);
 
-  for ($i=0; $i < strlen($query); $i++) {
-    $c = $query[$i];
+    $this->word_boundaries = array(
+      '[', ']', '=', '(', ')', '.', '<', '>', '*', '!', '|', '/', ',', ' ', ':',
+    );
 
-    if ($c == '"' | $c == "'") {
-      if ($in_quotes && $c == $quote_char) {
-        $in_quotes = FALSE;
-        $word .= $c;
-        $output .= $word;
-        $word = '';
+    $this->in_quotes = FALSE;
+    $this->quote_char = '';
+    $this->word = '';
+    $this->output = '';
+    $this->prev_boundary = '';
+    $this->axis = '';
+    $this->skip_next_word = FALSE;
+    $this->start();
+  }
+
+  function start() {
+    for ($i=0; $i < strlen($this->query); $i++) {
+      $this->i = $i;
+      $c = $this->query[$i];
+
+      if ($c == '"' || $c == "'") {
+        $this->handle_quote($c);
+        continue;
       }
-      elseif (!$in_quotes) {
-        $in_quotes = TRUE;
-        $output .= _feeds_xpathparser_handle_word($word);
-        $word = $c;
-        $quote_char = $c;
+
+      if ($this->in_quotes) {
+        $this->word .= $c;
+        continue;
+      }
+
+      if (in_array($c, $this->word_boundaries)) {
+        $this->handle_word_boundary($c);
       }
       else {
-        $word .= $c;
+        $this->word .= $c;
       }
-      continue;
     }
+    $this->handle_word();
+  }
 
-    if ($in_quotes) {
-      $word .= $c;
-      continue;
+  function handle_quote($c) {
+    if ($this->in_quotes && $c == $this->quote_char) {
+      $this->in_quotes = FALSE;
+      $this->word .= $c;
+      $this->output .= $this->word;
+      $this->word = '';
     }
-
-    if (in_array($c, $word_boundary)) {
-      if (in_array($word, array('div', 'or', 'and', 'mod')) && $prev_boundary == ' ') {
-        $output .= $word;
-      }
-      else {
-        $output .= _feeds_xpathparser_handle_word($word, $c);
-      }
-      $output .= $c;
-      $word = '';
-      $prev_boundary = $c;
+    elseif (!$this->in_quotes) {
+      $this->in_quotes = TRUE;
+      $this->handle_word();
+      $this->word = $c;
+      $this->quote_char = $c;
     }
     else {
-      $word .= $c;
+      $this->word .= $c;
     }
   }
-  return $output . _feeds_xpathparser_handle_word($word);
-}
 
-function _feeds_xpathparser_handle_word($word, $c ='', $axis = FALSE) {
-
-  if (strlen($word) === 0) {
-    return '';
+  function handle_word_boundary($c) {
+    if (in_array($this->word, array('div', 'or', 'and', 'mod')) &&
+        $this->prev_boundary == ' ' && $c == ' ') {
+      $this->output .= $this->word;
+    }
+    else {
+      $this->handle_word($c);
+    }
+    $this->output .= $c;
+    $this->word = '';
+    $this->prev_boundary = $c;
   }
 
-  if (strpos($word, '::') !== FALSE) {
-    $word = explode('::', $word, 2);
-    return $word[0] . '::' . _feeds_xpathparser_handle_word($word[1], '::', $word[0]);
+  function handle_word($c='') {
+    if ($this->word == '') {
+      return;
+    }
+    if ($c == ':' && $this->query[$this->i + 1] == ':') {
+      $this->axis = $this->word;
+    }
+    if ($c == ':' && $this->query[$this->i-1] != ':'  &&
+        $this->query[$this->i+1] != ':') {
+      $this->output .= $this->word;
+      $this->skip_next_word = TRUE;
+      return;
+    }
+
+    if ($this->skip_next_word) {
+      $this->skip_next_word = FALSE;
+      $this->output .= $this->word;
+      return;
+    }
+
+    if (is_numeric($this->word) ||
+        $this->axis == 'attribute' ||
+        strpos($this->word, '@') === 0 ||
+        $c == '(' ||
+        $c == ':') {
+      $this->output .= $this->word;
+      return;
+    }
+
+    $this->output .= '__default__:' . $this->word;
   }
 
-  if (is_numeric($word) || $axis == 'attribute' || strpos($word, '@') === 0 ||
-      $c == '(' || strpos($word, ':') !== FALSE) {
-    return $word;
+  function getQuery() {
+    return $this->output;
   }
-
-  return '__default__:' . $word;
 }
