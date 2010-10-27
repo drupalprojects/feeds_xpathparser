@@ -194,6 +194,7 @@ class FeedsXPathParserBase extends FeedsParser {
   public function sourceForm($source_config) {
     $form = array();
     $form['#weight'] = -10;
+    $form['#tree'] = FALSE;
 
     $mappings_ = feeds_importer($this->id)->processor->config['mappings'];
     $uniques = $mappings = array();
@@ -208,7 +209,7 @@ class FeedsXPathParserBase extends FeedsParser {
     }
 
     if (empty($mappings)) {
-      $form['error_message']['#value'] = 'FeedsXPathParser: No mappings were defined.';
+      $form['error_message']['#value'] = 'FeedsXPathParser: No mappings are defined.<br>';
       return $form;
     }
 
@@ -267,7 +268,7 @@ class FeedsXPathParserBase extends FeedsParser {
     $form['exp']['errors'] = array(
       '#type' => 'checkbox',
       '#title' => t('Show error messages.'),
-      '#default_value' => isset($source_config['exp']['errors']) ? $source_config['exp']['errors'] : FALSE,
+      '#default_value' => isset($source_config['errors']) ? $source_config['errors'] : FALSE,
     );
 
     if (extension_loaded('tidy')) {
@@ -275,15 +276,16 @@ class FeedsXPathParserBase extends FeedsParser {
         '#type'          => 'checkbox',
         '#title'         => t('Use Tidy'),
         '#description'   => t('The Tidy PHP extension has been detected.
-                              Slect this to clean the markup before parsing.'),
-        '#default_value' => isset($source_config['exp']['tidy']) ? $source_config['exp']['tidy'] : FALSE,
+                              Select this to clean the markup before parsing.'),
+        '#default_value' => isset($source_config['tidy']) ? $source_config['tidy'] : FALSE,
       );
     }
+
     $form['exp']['debug'] = array(
       '#type'    => 'checkboxes',
       '#title'   => t('Debug Query'),
       '#options' => array_merge(array('context' => 'context'), $mappings),
-      '#default_value' => isset($source_config['exp']['debug']) ? $source_config['exp']['debug'] : array(),
+      '#default_value' => isset($source_config['debug']) ? $source_config['debug'] : array(),
     );
 
     return $form;
@@ -310,18 +312,32 @@ class FeedsXPathParserBase extends FeedsParser {
   }
 
   /**
+   * Override parent::configForm().
+   */
+  public function configForm(&$form_state) {
+    $form = $this->sourceForm($this->config);
+    $form['context']['#required'] = FALSE;
+    return $form;
+  }
+
+  /**
    * Define defaults.
    */
   public function sourceDefaults() {
+    return $this->config;
+  }
+
+  /**
+   * Define defaults.
+   */
+  public function configDefaults() {
     return array(
       'sources' => array(),
       'rawXML'  => array(),
       'context' => '',
-      'exp'     => array(
-        'errors' => FALSE,
-        'tidy'   => FALSE,
-        'debug'   => array(),
-      ),
+      'errors' => FALSE,
+      'tidy'   => FALSE,
+      'debug'  => array(),
     );
   }
 
@@ -342,6 +358,13 @@ class FeedsXPathParserBase extends FeedsParser {
     foreach ($values['sources'] as &$query) {
       $query = trim($query);
     }
+  }
+
+  /**
+   * Override parent::sourceFormValidate().
+   */
+  public function configFormValidate(&$values) {
+    $this->sourceFormValidate($values);
   }
 
   /**
