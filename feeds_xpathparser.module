@@ -41,35 +41,3 @@ function feeds_xpathparser_feeds_plugins() {
 function feeds_xpathparser_enable() {
   cache_clear_all('plugins:feeds:plugins', 'cache');
 }
-
-/**
- * Implementation of hook_feeds_parser_sources_alter().
- *
- * Clear Feed's plugin cache so that this plugin shows up.
- */
-function feeds_xpathparser_feeds_parser_sources_alter(&$sources, $content_type) {
-  $importer_id = feeds_get_importer_id($content_type);
-  $mappings = feeds_importer($importer_id)->processor->config['mappings'];
-  $description = t('Allows you to configure an XPath expression that will populate this field.');
-  $name = t('XPath expression');
-
-  $newest_xpath_mapping = array();
-  foreach ($mappings as $mapping) {
-    if (strpos($mapping['source'], 'xpathparser:') === 0) {
-      $newest_xpath_mapping = $mapping;
-    }
-  }
-  if (!empty($newest_xpath_mapping)) {
-    list($a, $count) = explode(':', $newest_xpath_mapping['source']);
-    $sources[$a . ':' . ++$count] = array(
-      'name' => $name,
-     'description' => $description,
-    );
-  }
-  else {
-    $sources['xpathparser:0'] = array(
-      'name' => $name,
-     'description' => $description,
-    );
-  }
-}

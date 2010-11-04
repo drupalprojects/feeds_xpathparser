@@ -43,6 +43,7 @@ class FeedsXPathParserBase extends FeedsParser {
    *
    * @param $xml
    *   A SimpleXMLElement object.
+   *
    * @return array
    *   Returns a structured array suitable for adding to a batch object with
    *   $batch->setItems().
@@ -61,7 +62,7 @@ class FeedsXPathParserBase extends FeedsParser {
         $query = strtr($query, $variables);
         $result = $this->parseSourceElement($item, $query, $source);
         if (!is_array($result)) {
-          $variables['$' . $this->mappings[$source]] = "'$result'";
+          $variables['$' . $this->mappings[$source]] = $result;
         }
         $parsed_item[$source] = $result;
       }
@@ -75,8 +76,10 @@ class FeedsXPathParserBase extends FeedsParser {
    *
    * @param $xml
    *   The XML element to execute the query on.
+   *
    * @param $query
    *   An XPath query.
+   *
    * @return array
    *   An array containing the results of the query.
    */
@@ -136,7 +139,6 @@ class FeedsXPathParserBase extends FeedsParser {
 
   /**
    * Normalizes XPath queries, adding the default namespace.
-   *
    */
   private function addDefaultNamespace($query) {
     $parser = new FeedsXPathQueryParser($query);
@@ -148,10 +150,13 @@ class FeedsXPathParserBase extends FeedsParser {
    *
    * @param $item
    *   A  SimpleXMLElement from the context array.
+   *
    * @param $query
    *   An XPath query.
+   *
    * @param $source
    *   The name of the source for this query.
+   *
    * @return array
    *   An array containing the results of the query.
    */
@@ -198,7 +203,6 @@ class FeedsXPathParserBase extends FeedsParser {
 
     $mappings_ = feeds_importer($this->id)->processor->config['mappings'];
     $uniques = $mappings = array();
-
     foreach ($mappings_ as $mapping) {
       if (strpos($mapping['source'], 'xpathparser:') === 0) {
         $mappings[$mapping['source']] = $mapping['target'];
@@ -236,6 +240,7 @@ class FeedsXPathParserBase extends FeedsParser {
       );
       $form['sources']['help']['#value'] = '<div class="help">' . theme('item_list', $items) . '</div>';
     }
+
     $variables = array();
     foreach ($mappings as $source => $target) {
       $form['sources'][$source] = array(
@@ -365,6 +370,26 @@ class FeedsXPathParserBase extends FeedsParser {
     libxml_use_internal_errors($use_errors);
     return array($results, $error);
   }
+
+  /**
+  * Override parent::getMappingSources().
+  */
+  public function getMappingSources() {
+    $xpath_source = array(
+      'xpathparser:0' => array(
+        'name' => t('XPath Expression'),
+        'description' => t('Allows you to configure an XPath expression that will populate this field.'),
+      ),
+    );
+
+    $sources = parent::getMappingSources();
+    // Older versions of Feeds return FALSE here.
+    if (is_array($sources)) {
+      return $sources + $xpath_source;
+    }
+
+    return $xpath_source;
+  }
 }
 
 class FeedsXPathParserHTML extends FeedsXPathParserBase {
@@ -441,6 +466,33 @@ class FeedsXPathParserXML extends FeedsXPathParserBase {
     $batch->setItems($this->query($xml));
   }
 }
+
+
+/**
+ * Implementation of hook_form_feeds_ui_mapping_form_alter().
+ *
+ * This is an interesting bit of work. Each source name has to be unique,
+ * but we have no idea how many to create with getMappingSources() because we
+ * don't know how many targets there are going to be.
+ *
+ * The solution is to keep track in the form how many have been added.
+ */
+function feeds_xpathparser_form_feeds_ui_mapping_form_alter(&$form, &$form_state) {
+  $newest_xpath_mapping = array();
+  foreach ($form['#mappings'] as $mapping) {
+    if (strpos($mapping['source'], 'xpathparser:') === 0) {
+      $newest_xpath_mapping = $mapping;
+    }
+  }
+  if (!empty($newest_xpath_mapping)) {
+    list($a, $count) = explode(':', $newest_xpath_mapping['source']);
+    $default_source = $a . ':' . '0';
+    $label = $form['source']['#options'][$default_source];
+    unset($form['source']['#options'][$default_source]);
+    $form['source']['#options'][$a . ':' . ++$count] = $label;
+  }
+}
+
 
 /**
  * Pseudo-parser of XPath queries.  When an XML document has a default
