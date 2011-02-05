@@ -7,7 +7,6 @@
 function feeds_xpathparser_feeds_plugins() {
   $path = drupal_get_path('module', 'feeds_xpathparser');
   $info = array();
-
   $info['FeedsXPathParserHTML'] = array(
     'name'        => t('XPath HTML parser'),
     'description' => t('Parse HTML using XPath.'),
@@ -18,7 +17,6 @@ function feeds_xpathparser_feeds_plugins() {
       'path'   => $path,
     ),
   );
-
    $info['FeedsXPathParserXML'] = array(
     'name'        => t('XPath XML parser'),
     'description' => t('Parse XML using XPath.'),
@@ -29,7 +27,6 @@ function feeds_xpathparser_feeds_plugins() {
       'path'   => $path,
     ),
   );
-
   return $info;
 }
 
