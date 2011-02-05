@@ -303,6 +303,15 @@ class FeedsXPathParserBase extends FeedsParser {
                               Select this to clean the markup before parsing.'),
         '#default_value' => isset($source_config['exp']['tidy']) ? $source_config['exp']['tidy'] : FALSE,
       );
+      // We do all this so for the dependent tidy encoding field.
+      // Luckily, this only runs for people who have tidy installed. Hope they
+      // enjoy it.
+      $class = get_class($this);
+      $attr = 'edit-feeds-'.$class.'-xpath-exp-tidy';
+      $url = check_plain(request_uri());
+      if (strpos($url, '/admin/build/feeds/edit/') === 0) {
+        $attr = 'edit-xpath-exp-tidy';
+      }
       ctools_include('dependent');
       $form['xpath']['exp']['tidy_encoding'] = array(
         '#type' => 'textfield',
@@ -310,7 +319,7 @@ class FeedsXPathParserBase extends FeedsParser {
         '#description' => t('Set the encoding for tidy. See the !phpdocs for possible values.', array('!phpdocs' => l('PHP docs', 'http://www.php.net/manual/en/tidy.parsestring.php/'))),
         '#default_value' => isset($source_config['exp']['tidy_encoding']) ? $source_config['exp']['tidy_encoding'] : $config['exp']['tidy_encoding'],
         '#process' => array('ctools_dependent_process'),
-        '#dependency' => array('edit-exp-tidy' => array(TRUE)),
+        '#dependency' => array($attr => array(TRUE)),
       );
     }
     $form['xpath']['exp']['debug'] = array(
