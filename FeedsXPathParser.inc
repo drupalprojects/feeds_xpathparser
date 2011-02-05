@@ -220,14 +220,6 @@ class FeedsXPathParserBase extends FeedsParser {
       $source_config = $this->config;
     }
 
-    // Add extensions that might get importerd.
-    $fetcher = feeds_importer($this->id)->fetcher;
-    if (isset($fetcher->config['allowed_extensions'])) {
-      if (strpos($fetcher->config['allowed_extensions'], 'html') === FALSE) {
-        $fetcher->config['allowed_extensions'] .= ' html htm';
-      }
-    }
-
     $uniques = $mappings = array();
     foreach ($mappings_ as $mapping) {
       if (strpos($mapping['source'], 'xpathparser:') === 0) {

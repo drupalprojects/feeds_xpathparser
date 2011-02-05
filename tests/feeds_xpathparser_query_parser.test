@@ -10,7 +10,7 @@ class FeedsXPathQueryParserTestCase extends DrupalWebTestCase {
    */
   public function getInfo() {
     return array(
-      'name' => t('Feeds XPath Query Parser'),
+      'name' => t('XPath Parser: Query Parser'),
       'description' => t('Unit tests for the query parser inside Feeds XPath Parser.'),
       'group' => t('Feeds'),
     );
@@ -20,7 +20,8 @@ class FeedsXPathQueryParserTestCase extends DrupalWebTestCase {
    * Set up.
    */
   public function setUp() {
-    //parent::setUp('feeds', 'feeds_ui', 'ctools', 'job_scheduler', 'feeds_xpathparser');
+    parent::setUp();
+    // Load the files necessary instead of enabling the modules.
     module_load_include('inc', 'feeds', 'includes/FeedsConfigurable');
     module_load_include('inc', 'feeds', 'includes/FeedsSource');
     module_load_include('inc', 'feeds', 'plugins/FeedsPlugin');
@@ -63,6 +64,7 @@ class FeedsXPathQueryParserTestCase extends DrupalWebTestCase {
     $this->assertEqual($parser->getQuery(), 'child::*/child::__default__:price');
     $parser = new FeedsXPathQueryParser("/asdfasfd[@id = 'a' or @id='b']");
     $this->assertEqual($parser->getQuery(), "/__default__:asdfasfd[@id = 'a' or @id='b']");
+    // Go! difficult xpath queries from stack overflow.
     $parser = new FeedsXPathQueryParser("id('yui-gen2')/x:div[3]/x:div/x:a[1]");
     $this->assertEqual($parser->getQuery(), "id('yui-gen2')/x:div[3]/x:div/x:a[1]");
     $parser = new FeedsXPathQueryParser("/descendant::a[@class='buttonCheckout']");
