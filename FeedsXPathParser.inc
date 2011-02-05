@@ -213,7 +213,6 @@ class FeedsXPathParserBase extends FeedsParser {
    */
   public function sourceForm($source_config) {
     $form = array();
-
     $mappings_ = feeds_importer($this->id)->processor->config['mappings'];
 
     if (empty($source_config)) {
