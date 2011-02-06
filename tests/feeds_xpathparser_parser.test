@@ -38,7 +38,6 @@ class FeedsXPathParserParserTestCase extends FeedsWebTestCase {
     // Set the front page to show 30 nodes so we can easily see what is aggregated.
     $edit = array('default_nodes_main' => 30);
     $this->drupalPost('admin/content/node-settings', $edit, 'Save configuration');
-
   }
 
   /**
