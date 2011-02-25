@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Test cases for the xpath query parser.

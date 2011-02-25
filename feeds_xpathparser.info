@@ -1,4 +1,3 @@
-; $Id$
 name = Feeds XPath Parser
 description = Parse an XML or HTML document using XPath.
 package = Feeds
