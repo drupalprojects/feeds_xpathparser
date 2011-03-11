@@ -98,7 +98,7 @@ class FeedsXPathParserBase extends FeedsParser {
 
     $nodeList = $this->xpath->namespacedQuery($query, $context, $source);
     /**
-     * Iterate through the results of the xpath query.  If this source is
+     * Iterate through the results of the XPath query.  If this source is
      * configured to return raw xml, make it so.
      */
     if ($nodeList instanceof DOMNodeList) {
@@ -191,7 +191,7 @@ class FeedsXPathParserBase extends FeedsParser {
         '#size' => 80,
       );
       if (!empty($variables)) {
-        $form['xpath']['sources'][$source]['#description'] .= '<br>' . t('The variables '. implode(', ', $variables). ' are availliable for replacement.');
+        $form['xpath']['sources'][$source]['#description'] .= '<br>' . t('The variables '. implode(', ', $variables). ' are available for replacement.');
       }
       $variables[] = '$' . $target;
     }
@@ -470,9 +470,9 @@ class FeedsXPathParserXML extends FeedsXPathParserBase {
  * @todo
  *   Cleanup.
  * @param $query
- *   An xpath query string.
+ *   An XPath query string.
  * @return string
- *   An xpath query string with the __default__ namespace added.
+ *   An XPath query string with the __default__ namespace added.
  */
 class FeedsXPathQueryParser {
   function __construct($query) {
@@ -696,7 +696,7 @@ class FeedsXPathParserXPath extends DOMXPath {
   private function _query($query, $context = NULL) {
     $use_errors = libxml_use_internal_errors(TRUE);
 
-    // Perfom xpath query.
+    // Perfom XPath query.
     if ($context) {
       $results = $this->evaluate($query, $context);
     }
