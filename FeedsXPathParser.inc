@@ -374,7 +374,7 @@ class FeedsXPathParserBase extends FeedsParser {
   /**
    * Filters mappings, returning the ones that belong to us.
    */
-  private function filterMappings($mappings) {
+  protected function filterMappings($mappings) {
     $our_mappings = array();
     foreach ($mappings as $mapping) {
       if (strpos($mapping['source'], 'xpathparser:') === 0) {
@@ -553,8 +553,8 @@ class FeedsXPathQueryParser {
     if ($c == ':' && $this->query[$this->i + 1] == ':') {
       $this->axis = $this->word;
     }
-    if ($c == ':' && $this->query[$this->i-1] != ':'  &&
-        $this->query[$this->i+1] != ':') {
+    if ($c == ':' && $this->query[$this->i - 1] != ':'  &&
+        $this->query[$this->i + 1] != ':') {
       $this->output .= $this->word;
       $this->skip_next_word = TRUE;
       return;
@@ -594,7 +594,7 @@ class FeedsXPathParserXPath extends DOMXPath {
     $this->config = $config;
   }
 
-  private function debug($data, $source) {
+  protected function debug($data, $source) {
     $o = '<ul>';
     if ($data instanceof DOMNodeList) {
       foreach ($data as $node) {
@@ -666,7 +666,7 @@ class FeedsXPathParserXPath extends DOMXPath {
    * @param $query
    *   An XPath query string
    */
-  private function addDefaultNamespace(&$query) {
+  protected function addDefaultNamespace(&$query) {
     foreach ($this->namespaces as $prefix => $namespace) {
       if ($prefix === '') {
         $this->registerNamespace('__default__', $namespace);
@@ -693,7 +693,7 @@ class FeedsXPathParserXPath extends DOMXPath {
    * libxml version, $xml->xpath() might return FALSE or an empty array() when
    * a query doesn't match.
    */
-  private function _query($query, $context = NULL) {
+  protected function _query($query, $context = NULL) {
     $use_errors = libxml_use_internal_errors(TRUE);
 
     // Perfom XPath query.
