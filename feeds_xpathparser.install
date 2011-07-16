@@ -1,0 +1,10 @@
+<?php
+
+/**
+ * Implementation of hook_enable().
+ *
+ * Clear Feed's plugin cache so that this plugin shows up.
+ */
+function feeds_xpathparser_enable() {
+  cache_clear_all('plugins:feeds:plugins', 'cache');
+}
