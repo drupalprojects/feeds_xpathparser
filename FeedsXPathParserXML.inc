@@ -41,5 +41,6 @@ class FeedsXPathParserXML extends FeedsXPathParserBase {
     unset($raw);
     $this->query();
     unset($this->doc);
+    unset($this->batch);
   }
 }

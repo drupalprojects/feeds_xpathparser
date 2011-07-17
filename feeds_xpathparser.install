@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Contains hook_enable to clear Feeds's cache.
+ */
+
+/**
  * Implementation of hook_enable().
  *
  * Clear Feed's plugin cache so that this plugin shows up.

@@ -17,6 +17,10 @@
     <summary>Some text.</summary>
   </entry>
 
+  <!-- Empty entry here intentionally. See #1189192.-->
+  <entry>
+  </entry>
+
   <entry>
     <title>My dog Jack is the best.</title>
     <link href="http://example.org/2003/12/13/atom04"/>
