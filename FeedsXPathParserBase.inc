@@ -231,6 +231,7 @@ class FeedsXPathParserBase extends FeedsParser {
       '#default_value' => isset($source_config['exp']['errors']) ? $source_config['exp']['errors'] : FALSE,
     );
     if (extension_loaded('tidy')) {
+      ctools_include('dependent');
       $form['xpath']['exp']['tidy'] = array(
         '#type' => 'checkbox',
         '#title' => t('Use Tidy'),
@@ -243,13 +244,8 @@ class FeedsXPathParserBase extends FeedsParser {
         '#title' => t('Tidy encoding'),
         '#description' => t('Set the encoding for tidy. See the !phpdocs for possible values.', array('!phpdocs' => l(t('PHP docs'), 'http://www.php.net/manual/en/tidy.parsestring.php/'))),
         '#default_value' => isset($source_config['exp']['tidy_encoding']) ? $source_config['exp']['tidy_encoding'] : 'UTF8',
-        '#states' => array(
-          'visible' => array(
-            ':input[name$="[tidy]"]' => array(
-              'checked' => TRUE,
-            ),
-          ),
-        ),
+        '#process' => array('ctools_dependent_process'),
+        '#dependency' => array('edit-xpath-exp-tidy' => array(TRUE)),
       );
     }
     $form['xpath']['exp']['debug'] = array(
