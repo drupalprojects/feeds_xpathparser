@@ -23,24 +23,25 @@ class FeedsXPathParserBase extends FeedsParser {
       $this->source_config = $this->getConfig();
     }
 
-    $this->batch = $batch;
-
     $mappings = $source->importer->processor->config['mappings'];
     $this->mappings = $this->filterMappings($mappings);
     $this->rawXML = array_keys(array_filter($this->source_config['rawXML']));
     // Set link.
     $fetcher_config = $source->getConfigFor($source->importer->fetcher);
-    $this->batch->link = $fetcher_config['source'];
+    $batch->link = $fetcher_config['source'];
   }
 
   /**
    * Starts the parsing. First runs the context query, then queries each
    * item from the context with the field queries.
    *
+   * @param FeedsImportBatch
+   *   The FeedsImportBatch object to add items.
+   *
    * @return array
    *   Returns a structured array suitable for use in FeedsParserResult().
    */
-  protected function query() {
+  protected function query($batch) {
 
     $this->xpath = new FeedsXPathParserDOMXPath($this->doc);
     $config = array();
@@ -68,7 +69,7 @@ class FeedsXPathParserBase extends FeedsParser {
         }
       }
       if (!empty($parsedItem)) {
-        $this->batch->items[] = $parsedItem;
+        $batch->items[] = $parsedItem;
       }
     }
   }
