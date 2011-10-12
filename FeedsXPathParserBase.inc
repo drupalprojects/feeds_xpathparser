@@ -37,9 +37,6 @@ class FeedsXPathParserBase extends FeedsParser {
    * Starts the parsing. First runs the context query, then queries each
    * item from the context with the field queries.
    *
-   * @param $dom
-   *   A DOMDocument object.
-   *
    * @return array
    *   Returns a structured array suitable for use in FeedsParserResult().
    */
@@ -114,15 +111,19 @@ class FeedsXPathParserBase extends FeedsParser {
           $results[] = $node->nodeValue;
         }
       }
+      // Return single result if so.
       if (count($results) === 1) {
         return $results[0];
       }
-      if (count($results) === 0) {
+      // Empty result returns NULL, that way we can check.
+      elseif (empty($results)) {
         return;
       }
-      return $results;
+      else {
+        return $results;
+      }
     }
-    else {
+    elseif (!empty($node_list)) {
       return $node_list;
     }
   }
@@ -328,6 +329,9 @@ class FeedsXPathParserBase extends FeedsParser {
    * Override parent::sourceFormValidate().
    */
   public function configFormValidate(&$values) {
+    $mappings = $this->getOwnMappings();
+
+    // This tests if we're validating configForm or sourceForm.
     $config_form = FALSE;
     if (isset($values['xpath'])) {
       $values = $values['xpath'];
@@ -361,12 +365,24 @@ class FeedsXPathParserBase extends FeedsParser {
         $result = $xml->xpath($query);
         $error = libxml_get_last_error();
         if ($error && $error->code != 1219) {
-          $element = 'feeds][' . $class . '][xpath][sources][' . $key;
-          if ($config_form) {
-            $element = 'xpath][sources][' . $key;
+          $variable_present = FALSE;
+          // Our variable substitution options can cause syntax errors, check
+          // if we're doing that.
+          if ($error->code == 1207) {
+            foreach ($mappings as $target) {
+              if (strpos($query, '$' . $target) !== FALSE) {
+                $variable_present = TRUE;
+              }
+            }
           }
-          form_set_error($element, t('There was an error with the XPath selector: %error', array('%error' => $error->message)));
-          libxml_clear_errors();
+          if (!$variable_present) {
+            $element = 'feeds][' . $class . '][xpath][sources][' . $key;
+            if ($config_form) {
+              $element = 'xpath][sources][' . $key;
+            }
+            form_set_error($element, t('There was an error with the XPath selector: %error', array('%error' => $error->message)));
+            libxml_clear_errors();
+          }
         }
       }
     }
@@ -377,7 +393,7 @@ class FeedsXPathParserBase extends FeedsParser {
   * Override parent::getMappingSources().
   */
   public function getMappingSources() {
-    $mappings = $this->filterMappings(feeds_importer($this->id)->processor->config['mappings']);
+    $mappings = $this->getOwnMappings();
     $next = 0;
     if (!empty($mappings)) {
       $keys = array_keys($mappings);
@@ -393,6 +409,11 @@ class FeedsXPathParserBase extends FeedsParser {
     ) + parent::getMappingSources();
   }
 
+  protected function getOwnMappings() {
+    $mappings = feeds_importer($this->id)->processor->config['mappings'];
+    return $this->filterMappings($mappings);
+  }
+
   /**
    * Filters mappings, returning the ones that belong to us.
    */
@@ -404,5 +425,30 @@ class FeedsXPathParserBase extends FeedsParser {
       }
     }
     return $our_mappings;
+  }
+
+  protected function errorStart() {
+    return libxml_use_internal_errors(TRUE);
+  }
+
+  protected function errorStop($use, $print = TRUE) {
+    if ($print) {
+      foreach (libxml_get_errors() as $error) {
+        switch ($error->level) {
+          case LIBXML_ERR_WARNING:
+          case LIBXML_ERR_ERROR:
+            $type = 'warning';
+            break;
+          case LIBXML_ERR_FATAL:
+            $type = 'error';
+            break;
+
+        }
+        $message = t('%error on line %num. Error code: %code', array('%error' => trim($error->message), '%num' => $error->line, '%code' => $error->code));
+        drupal_set_message($message, $type, FALSE);
+      }
+    }
+    libxml_clear_errors();
+    libxml_use_internal_errors($use);
   }
 }

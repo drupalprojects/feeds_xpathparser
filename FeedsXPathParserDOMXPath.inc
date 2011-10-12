@@ -9,7 +9,12 @@ class FeedsXPathParserDOMXPath extends DOMXPath {
   protected $modifiedQueries = array();
 
   public function __construct(DOMDocument $doc) {
-    $this->namespaces = simplexml_import_dom($doc)->getNamespaces(TRUE);
+    $this->namespaces = array();
+    $simple = simplexml_import_dom($doc);
+    // An empty DOMDocument will make $simple NULL.
+    if ($simple !== NULL) {
+      $this->namespaces = $simple->getNamespaces(TRUE);
+    }
     $this->doc = $doc;
     parent::__construct($doc);
   }

@@ -5,6 +5,8 @@
  * Tests for FeedsXPathParser.inc.
  */
 
+require_once dirname(__FILE__) . '/feeds_xpathparser.test';
+
 /**
  * Test single feeds.
  */
@@ -43,7 +45,7 @@ class FeedsXPathParseHTMLTestCase extends FeedsXPathParserWebTestCase {
       )
     );
     // Set importer default settings.
-    $importer_url = 'admin/build/feeds/edit/xpath/settings/FeedsXPathParserHTML';
+    $importer_url = $this->feeds_base . '/xpath/settings/FeedsXPathParserHTML';
     $edit = array(
       'xpath[context]' => '//tr[starts-with(@class, "odd ") or starts-with(@class, "even ")]',
       'xpath[sources][xpathparser:0]' => 'td[1]/a',

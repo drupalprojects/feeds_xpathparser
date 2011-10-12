@@ -18,7 +18,7 @@ class FeedsXPathParserQueryParserTestCase extends DrupalUnitTestCase {
 
   public function setUp() {
     parent::setUp();
-    module_load_include('inc', 'feeds_xpathparser', 'FeedsXPathParserQueryParser');
+    require_once dirname(__FILE__) . '/../FeedsXPathParserQueryParser.inc';
   }
 
   function testSimple() {

@@ -30,6 +30,14 @@ class FeedsXPathParserWebTestCase extends FeedsWebTestCase {
     // text on nodes will fail.
     //$edit = array('fields[body][type]' => 'text_default');
     //$this->drupalPost('admin/structure/types/manage/article/display/teaser', $edit, 'Save');
+    // Generalize across my version of feeds and the standard one.
+    $items = feeds_ui_menu();
+    if (isset($items['admin/build/feeds/%feeds_importer/edit'])) {
+      $this->feeds_base = 'admin/structure/feeds';
+    }
+    else {
+      $this->feeds_base = 'admin/build/feeds/edit';
+    }
   }
 
   function postAndCheck($url, $edit, $button, $saved_text) {

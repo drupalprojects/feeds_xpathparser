@@ -21,13 +21,7 @@ class FeedsXPathParserHTML extends FeedsXPathParserBase {
   public function parse(FeedsImportBatch $batch, FeedsSource $source) {
     parent::parse($batch, $source);
 
-    $raw = $batch->getRaw();
-
-    if (empty($raw)) {
-      drupal_set_message(t('Feeds XPath parser: The HTML document is empty.'), 'warning');
-      return;
-    }
-    if (isset($this->source_config['exp']['tidy']) && $this->source_config['exp']['tidy']) {
+    if (!empty($this->source_config['exp']['tidy'])) {
       $config = array(
         'merge-divs'       => FALSE,
         'merge-spans'      => FALSE,
@@ -40,15 +34,13 @@ class FeedsXPathParserHTML extends FeedsXPathParserBase {
       );
       // Default tidy encoding is UTF8.
       $encoding = $this->source_config['exp']['tidy_encoding'];
-      $raw = tidy_repair_string(trim($raw), $config, $encoding);
+       $raw = tidy_repair_string(trim($batch->getRaw()), $config, $encoding);
     }
     $this->doc = new DOMDocument();
-    if ($this->source_config['exp']['errors']) {
-      $success = $this->doc->loadHTML($raw);
-    }
-    else {
-      $success = @$this->doc->loadHTML($raw);
-    }
+    // Use our own error handling.
+    $use = $this->errorStart();
+    $success = $this->doc->loadHTML($batch->getRaw());
+    $this->errorStop($use, $this->source_config['exp']['errors']);
     unset($raw);
     if (!$success) {
       throw new Exception(t('There was an error parsing the HTML document.'));

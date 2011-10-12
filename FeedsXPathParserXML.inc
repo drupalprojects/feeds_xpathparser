@@ -20,13 +20,8 @@ class FeedsXPathParserXML extends FeedsXPathParserBase {
    */
   public function parse(FeedsImportBatch $batch, FeedsSource $source) {
     parent::parse($batch, $source);
-    $raw = $batch->getRaw();
 
-    if (empty($raw)) {
-      drupal_set_message(t('Feeds XPath parser: The XML document is empty.'), 'warning');
-      return;
-    }
-    if (isset($this->source_config['exp']['tidy']) && $this->source_config['exp']['tidy']) {
+    if (!empty($this->source_config['exp']['tidy'])) {
       $config = array(
         'input-xml' => TRUE,
         'wrap'      => 0,
@@ -34,11 +29,15 @@ class FeedsXPathParserXML extends FeedsXPathParserBase {
       );
       // Default tidy encoding is UTF8.
       $encoding = $this->source_config['exp']['tidy_encoding'];
-      $raw = tidy_repair_string(trim($raw), $config, $encoding);
+      $raw = tidy_repair_string(trim($batch->getRaw()), $config, $encoding);
     }
     $this->doc = new DOMDocument();
-    $this->doc->loadXML($raw);
-    unset($raw);
+    $use = $this->errorStart();
+    $success = $this->doc->loadXML($batch->getRaw());
+    $this->errorStop($use, $this->source_config['exp']['errors']);
+    if (!$success) {
+      throw new Exception(t('There was an error parsing the XML document.'));
+    }
     $this->query();
     unset($this->doc);
     unset($this->batch);

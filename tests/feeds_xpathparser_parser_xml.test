@@ -5,6 +5,8 @@
  * Tests for FeedsXPathParserXML.inc.
  */
 
+require_once dirname(__FILE__) . '/feeds_xpathparser.test';
+
 /**
  * Test single feeds.
  */
@@ -26,7 +28,7 @@ class FeedsXPathParserXMLTestCase extends FeedsXPathParserWebTestCase {
    */
   public function test() {
     $this->createImporterConfiguration('XPathXML', 'xpath_xml');
-    $importer_url = 'admin/build/feeds/edit/xpath_xml/settings/FeedsXPathParserXML';
+    $importer_url = $this->feeds_base . '/xpath_xml/settings/FeedsXPathParserXML';
 
     $this->setPlugin('xpath_xml', 'FeedsXPathParserXML');
     $this->drupalGet($importer_url);
@@ -188,5 +190,51 @@ class FeedsXPathParserXMLTestCase extends FeedsXPathParserWebTestCase {
     $this->drupalGet($feed_node_edit_url);
     $this->assertNoText('XPath Parser Settings');
     $this->assertNoField('xpath[context]');
+  }
+
+  /**
+   * Test variable substitution.
+   */
+  public function testVariables() {
+    $this->createImporterConfiguration();
+
+    $this->setPlugin('syndication', 'FeedsXPathParserXML');
+    $importer_url = $this->feeds_base . '/syndication/settings/FeedsXPathParserXML';
+    $this->addMappings('syndication',
+      array(
+        array(
+          'source' => 'xpathparser:0',
+          'target' => 'title',
+          'unique' => FALSE,
+        ),
+        array(
+          'source' => 'xpathparser:1',
+          'target' => 'guid',
+          'unique' => TRUE,
+        ),
+        array(
+          'source' => 'xpathparser:2',
+          'target' => 'body',
+          'unique' => FALSE,
+        ),
+      )
+    );
+    // Set importer default settings.
+    $edit = array(
+      'xpath[context]' => '//entry',
+      'xpath[sources][xpathparser:0]' => 'title',
+      'xpath[sources][xpathparser:1]' => 'id',
+      'xpath[sources][xpathparser:2]' => 'link/@$title',
+    );
+    $this->postAndCheck($importer_url, $edit, 'Save', 'Your changes have been saved.');
+
+    // Test import.
+    $path = $GLOBALS['base_url'] . '/' . drupal_get_path('module', 'feeds_xpathparser') . '/tests/feeds_xpathparser/';
+    // We use an atom feed so that we can test that default namespaces are being
+    // applied appropriately.
+    $nid = $this->createFeedNode('syndication', $path . 'rewrite_test.xml', 'Testing XPath XML Parser');
+    $feed_node_edit_url = 'node/' . $nid . '/edit';
+    $this->assertText('Created 3 Story nodes.');
+    $this->drupalGet('node');
   }
 }
