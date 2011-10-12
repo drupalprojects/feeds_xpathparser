@@ -28,21 +28,17 @@ class FeedsXPathParserDOMXPath extends DOMXPath {
   }
 
   protected function debug($data, $source) {
-    $output = array();
-    $output[] = $source . ':';
-    $output[] = '<ul>';
+    $output = "$source : <ul>";
     if ($data instanceof DOMNodeList) {
       foreach ($data as $node) {
-        $output[] = '<li>';
-        $output[] = check_plain($this->doc->saveXML($node));
-        $output[] = '</li>';
+        $output .= '<li>' . check_plain($this->doc->saveXML($node)) . '</li>';
       }
     }
     else {
-      $output[] = '<li>' . check_plain($data) . '</li>';
+      $output .= '<li>' . check_plain($data) . '</li>';
     }
-    $output[] = '</ul>';
-    drupal_set_message(implode('', $output));
+    $output .= '</ul>';
+    drupal_set_message($output);
   }
   /**
    * Executes an XPath query with namespace support.
