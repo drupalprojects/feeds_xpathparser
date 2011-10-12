@@ -76,7 +76,7 @@ abstract class FeedsXPathParserBase extends FeedsParser {
         }
       }
       if (!empty($parsed_item)) {
-        $parser_result->items[] = $parsed_item;
+        $batch->items[] = $parsed_item;
       }
     }
     unset($this->doc);
