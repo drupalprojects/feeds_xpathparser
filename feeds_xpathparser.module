@@ -6,11 +6,20 @@
 function feeds_xpathparser_feeds_plugins() {
   $path = drupal_get_path('module', 'feeds_xpathparser');
   return array(
+    'FeedsXPathParserBase' => array(
+      'hidden' => TRUE,
+      'handler' => array(
+        'parent' => 'FeedsParser',
+        'class'  => 'FeedsXPathParserBase',
+        'file'   => 'FeedsXPathParserBase.inc',
+        'path'   => $path,
+      ),
+    ),
     'FeedsXPathParserHTML' => array(
       'name' => t('XPath HTML parser'),
       'description' => t('Parse HTML using XPath.'),
       'handler' => array(
-        'parent' => 'FeedsParser',
+        'parent' => 'FeedsXPathParserBase',
         'class'  => 'FeedsXPathParserHTML',
         'file'   => 'FeedsXPathParserHTML.inc',
         'path'   => $path,
@@ -20,7 +29,7 @@ function feeds_xpathparser_feeds_plugins() {
       'name' => t('XPath XML parser'),
       'description' => t('Parse XML using XPath.'),
       'handler' => array(
-        'parent' => 'FeedsParser',
+        'parent' => 'FeedsXPathParserBase',
         'class'  => 'FeedsXPathParserXML',
         'file'   => 'FeedsXPathParserXML.inc',
         'path'   => $path,

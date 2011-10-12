@@ -4,6 +4,10 @@
  * @file
  * Provides a custom version of DOMXPath for use with feeds_xpathparser.
  */
+
+/**
+ * Subclass of DOMXPath that provides namespace support and debuggin.
+ */
 class FeedsXPathParserDOMXPath extends DOMXPath {
   protected $config = array();
   protected $modifiedQueries = array();

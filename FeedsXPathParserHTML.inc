@@ -5,18 +5,13 @@
  * Provides the FeedsXPathParserHTML class.
  */
 
-// Require base class.
-require_once(dirname(__FILE__) .'/FeedsXPathParserBase.inc');
-require_once(dirname(__FILE__) .'/FeedsXPathParserDOMXPath.inc');
-require_once(dirname(__FILE__) .'/FeedsXPathParserQueryParser.inc');
-
 /**
- *
+ * Parse HTML using XPath.
  */
 class FeedsXPathParserHTML extends FeedsXPathParserBase {
 
   /**
-   * Implements FeedsXPathParserBase::setup().
+   * Implementation of FeedsXPathParserBase::setup().
    */
   protected function setup($source_config, FeedsImportBatch $batch) {
 

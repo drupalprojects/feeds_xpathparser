@@ -2,8 +2,12 @@
 
 /**
  * @file
- * Provides the base class for FeedsXPathParserHTML and FeedsXPathParserXML.
+ * Provides the abstract base class for FeedsXPathParserHTML and FeedsXPathParserXML.
  */
+
+// Require auxilary classes.
+require_once dirname(__FILE__) . '/FeedsXPathParserDOMXPath.inc';
+require_once dirname(__FILE__) . '/FeedsXPathParserQueryParser.inc';
 
 /**
  * Base class for the HTML and XML parsers.
