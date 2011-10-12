@@ -16,34 +16,31 @@ require_once(dirname(__FILE__) .'/FeedsXPathParserQueryParser.inc');
 class FeedsXPathParserXML extends FeedsXPathParserBase {
 
   /**
-   * Implements FeedsParser::parse().
+   * Implements FeedsXPathParserBase::setup().
    */
-  public function parse(FeedsImportBatch $batch, FeedsSource $source) {
-    parent::parse($batch, $source);
+  protected function setup($source_config, FeedsImportBatch $batch) {
 
-    // Determine if we should tidy things up.
-    if (!empty($this->source_config['exp']['tidy'])) {
+    if (!empty($source_config['exp']['tidy'])) {
       $config = array(
         'input-xml' => TRUE,
         'wrap'      => 0,
         'tidy-mark' => FALSE,
       );
       // Default tidy encoding is UTF8.
-      $encoding = $this->source_config['exp']['tidy_encoding'];
+      $encoding = $source_config['exp']['tidy_encoding'];
       $raw = tidy_repair_string(trim($batch->getRaw()), $config, $encoding);
     }
     else {
       $raw = $batch->getRaw();
     }
-    $this->doc = new DOMDocument();
+    $doc = new DOMDocument();
     $use = $this->errorStart();
-    $success = $this->doc->loadXML($raw);
+    $success = $doc->loadXML($raw);
     unset($raw);
-    $this->errorStop($use, $this->source_config['exp']['errors']);
+    $this->errorStop($use, $source_config['exp']['errors']);
     if (!$success) {
       throw new Exception(t('There was an error parsing the XML document.'));
     }
-    $this->query($batch);
-    unset($this->doc);
+    return $doc;
   }
 }

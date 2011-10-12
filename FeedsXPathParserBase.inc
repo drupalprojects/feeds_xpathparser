@@ -8,70 +8,75 @@
 /**
  * Base class for the HTML and XML parsers.
  */
-class FeedsXPathParserBase extends FeedsParser {
+abstract class FeedsXPathParserBase extends FeedsParser {
 
   protected $modified_queries = array();
   protected $rawXML = array();
+  protected $doc = NULL;
+  protected $xpath = NULL;
+
+  /**
+   * Classes that use FeedsXPathParserBase must implement this.
+   *
+   * @param array $source_config
+   *   The configuration for the source.
+   * @param FeedsFetcherResult $fetcher_result
+   *   A FeedsFetcherResult object.
+   *
+   * @return DOMDocument
+   *   The DOMDocument to perform XPath queries on.
+   */
+  abstract protected function setup($source_config, FeedsImportBatch $batch);
 
   /**
    * Implements FeedsParser::parse().
    */
   public function parse(FeedsImportBatch $batch, FeedsSource $source) {
-    $this->source_config = $source->getConfigFor($this);
+    $source_config = $source->getConfigFor($this);
 
-    if (empty($this->source_config)) {
-      $this->source_config = $this->getConfig();
+    if (empty($source_config)) {
+      $source_config = $this->getConfig();
     }
 
-    $mappings = $source->importer->processor->config['mappings'];
-    $this->mappings = $this->filterMappings($mappings);
-    $this->rawXML = array_keys(array_filter($this->source_config['rawXML']));
+    $this->doc = $this->setup($source_config, $batch);
+
+    $mappings = $this->getOwnMappings();
+    $this->rawXML = array_keys(array_filter($source_config['rawXML']));
     // Set link.
     $fetcher_config = $source->getConfigFor($source->importer->fetcher);
     $batch->link = $fetcher_config['source'];
-  }
-
-  /**
-   * Starts the parsing. First runs the context query, then queries each
-   * item from the context with the field queries.
-   *
-   * @param FeedsImportBatch
-   *   The FeedsImportBatch object to add items.
-   *
-   * @return array
-   *   Returns a structured array suitable for use in FeedsParserResult().
-   */
-  protected function query($batch) {
 
     $this->xpath = new FeedsXPathParserDOMXPath($this->doc);
     $config = array();
-    $config['debug'] = array_keys(array_filter($this->source_config['exp']['debug']));
-    $config['errors'] = $this->source_config['exp']['errors'];
+    $config['debug'] = array_keys(array_filter($source_config['exp']['debug']));
+    $config['errors'] = $source_config['exp']['errors'];
 
     $this->xpath->setConfig($config);
-    $allNodes = $this->xpath->namespacedQuery($this->source_config['context'], NULL, 'context');
+    $all_nodes = $this->xpath->namespacedQuery($source_config['context'], NULL, 'context');
 
-    foreach ($allNodes as $node) {
-      $parsedItem = $variables = array();
-      foreach ($this->source_config['sources'] as $source => $query) {
+    foreach ($all_nodes as $node) {
+      $parsed_item = $variables = array();
+      foreach ($source_config['sources'] as $source => $query) {
         // Variable substitution.
         $query = strtr($query, $variables);
         // Parse the item.
         $result = $this->parseSourceElement($query, $node, $source);
         if (isset($result)) {
           if (!is_array($result)) {
-            $variables['$' . $this->mappings[$source]] = $result;
+            $variables['$' . $mappings[$source]] = $result;
           }
           else {
-            $variables['$' . $this->mappings[$source]] = '';
+            $variables['$' . $mappings[$source]] = '';
           }
-          $parsedItem[$source] = $result;
+          $parsed_item[$source] = $result;
         }
       }
-      if (!empty($parsedItem)) {
-        $batch->items[] = $parsedItem;
+      if (!empty($parsed_item)) {
+        $parser_result->items[] = $parsed_item;
       }
     }
+    unset($this->doc);
+    unset($this->xpath);
   }
 
   /**

@@ -24,19 +24,21 @@ class FeedsXPathParserDOMXPath extends DOMXPath {
   }
 
   protected function debug($data, $source) {
-    $o = '<ul>';
+    $output = array();
+    $output[] = $source . ':';
+    $output[] = '<ul>';
     if ($data instanceof DOMNodeList) {
       foreach ($data as $node) {
-        $o .= '<li>';
-        $o .= check_plain($this->doc->saveXML($node));
-        $o .= '</li>';
+        $output[] = '<li>';
+        $output[] = check_plain($this->doc->saveXML($node));
+        $output[] = '</li>';
       }
     }
     else {
-      $o .= '<li>' . check_plain($data) . '</li>';
+      $output[] = '<li>' . check_plain($data) . '</li>';
     }
-    $o .= '</ul>';
-    drupal_set_message($source . ':' . $o);
+    $output[] = '</ul>';
+    drupal_set_message(implode('', $output));
   }
   /**
    * Executes an XPath query with namespace support.
@@ -81,7 +83,8 @@ class FeedsXPathParserDOMXPath extends DOMXPath {
       }
     }
     // Some versions of libxml return an empty array, some false on a query
-    // that returns no results. We always return an array to make like easier.
+    // that returns no results. We always return an array to make things
+    // consistent.
     if ($results === FALSE) {
       return array();
     }
