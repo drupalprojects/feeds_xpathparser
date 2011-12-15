@@ -21,3 +21,8 @@ function feeds_xpathparser_update_6101() {
   cache_clear_all('plugins:feeds:plugins', 'cache');
   return array();
 }
+
+/**
+ * Update to trigger cache clear.
+ */
+function feeds_xpathparser_update_6102() {}
