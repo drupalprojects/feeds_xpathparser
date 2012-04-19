@@ -133,7 +133,8 @@ abstract class FeedsXPathParserBase extends FeedsParser {
         return $results;
       }
     }
-    elseif (!empty($node_list)) {
+    // A value was returned directly from namespacedQuery().
+    else {
       return $node_list;
     }
   }
