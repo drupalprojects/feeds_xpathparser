@@ -46,6 +46,10 @@ class FeedsXPathParserHTML extends FeedsXPathParserBase {
   }
 
   protected function getRaw(DOMNode $node) {
-    return $this->doc->saveHTML($node);
+    // DOMDocument::saveHTML() cannot take $node as an argument prior to 5.3.6.
+    if (version_compare(phpversion(), '5.3.6', '>=')) {
+      return $this->doc->saveHTML($node);
+    }
+    return $this->doc->saveXML($node);
   }
 }
