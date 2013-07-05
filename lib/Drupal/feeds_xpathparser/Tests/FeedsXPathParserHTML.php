@@ -2,17 +2,18 @@
 
 /**
  * @file
- * Tests for FeedsXPathParser.inc.
+ * Contains Drupal\feeds_xpathparser\Tests\FeedsXPathParseHTMLTestCase.
  */
+
+namespace Drupal\feeds_xpathparser\Tests;
+
+use Drupal\feeds_xpathparser\WebTestBase;
 
 /**
  * Test single feeds.
  */
-class FeedsXPathParseHTMLTestCase extends FeedsXPathParserWebTestCase {
+class FeedsXPathParseHTMLTestCase extends WebTestBase {
 
-  /**
-   * Describe this test.
-   */
   public static function getInfo() {
     return array(
       'name' => 'HTML Parser',
@@ -192,7 +193,6 @@ class FeedsXPathParseHTMLTestCase extends FeedsXPathParserWebTestCase {
 
     $this->_testGetRaw($importer_url);
   }
-
 
   public function _testGetRaw($importer_url) {
     $this->addMappings('xpath', array(

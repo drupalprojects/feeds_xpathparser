@@ -2,17 +2,18 @@
 
 /**
  * @file
- * Tests for FeedsXPathParserXML.inc.
+ * Contains Drupal\feeds_xpathparser\Tests\FeedsXPathParseXMLTestCase.
  */
+
+namespace Drupal\feeds_xpathparser\Tests;
+
+use Drupal\feeds_xpathparser\WebTestBase;
 
 /**
  * Test single feeds.
  */
-class FeedsXPathParserXMLTestCase extends FeedsXPathParserWebTestCase {
+class FeedsXPathParserXMLTestCase extends WebTestBase {
 
-  /**
-   * Describe this test.
-   */
   public static function getInfo() {
     return array(
       'name' => 'XML Parser',
@@ -27,7 +28,7 @@ class FeedsXPathParserXMLTestCase extends FeedsXPathParserWebTestCase {
   public function test() {
     $this->createImporterConfiguration('XPathXML', 'xpath_xml');
 
-    $this->setPlugin('xpath_xml', 'FeedsXPathParserXML');
+    $this->setPlugin('xpath_xml', 'xpath_xml');
     $importer_url = $this->feeds_base . '/xpath_xml/settings/FeedsXPathParserXML';
     // Check help message.
     $this->drupalGet($importer_url);
@@ -232,4 +233,5 @@ class FeedsXPathParserXMLTestCase extends FeedsXPathParserWebTestCase {
     $this->assertText('Created 3 nodes');
     $this->drupalGet('node');
   }
+
 }

@@ -2,12 +2,17 @@
 
 /**
  * @file
- * Test cases for the xpath query parser.
+ * Contains Drupal\feeds_xpathparser\Tests\FeedsXPathParseHTMLTestCase.
  */
-class FeedsXPathParserQueryParserTestCase extends DrupalUnitTestCase {
-  /**
-   * Describe this test.
-   */
+
+namespace Drupal\feeds_xpathparser\Tests;
+
+use Drupal\feeds_xpathparser\FeedsXPathParserQueryParser;
+use Drupal\simpletest\UnitTestBase;
+
+
+class FeedsXPathParserQueryParserTestCase extends UnitTestBase {
+
   public static function getInfo() {
     return array(
       'name' => t('Query Parser'),
@@ -16,12 +21,7 @@ class FeedsXPathParserQueryParserTestCase extends DrupalUnitTestCase {
     );
   }
 
-  public function setUp() {
-    parent::setUp();
-    module_load_include('inc', 'feeds_xpathparser', 'FeedsXPathParserQueryParser');
-  }
-
-  function testSimple() {
+  public function testSimple() {
     $parser = new FeedsXPathParserQueryParser('cow');
     $this->assertEqual($parser->getQuery(), '__default__:cow');
     $parser = new FeedsXPathParserQueryParser('/cow');
@@ -78,4 +78,5 @@ class FeedsXPathParserQueryParserTestCase extends DrupalUnitTestCase {
     $parser = new FeedsXPathParserQueryParser('not(/asdfasfd/asdfasf//asdfasdf) | /asdfasf/sadfasf/@asdf');
     $this->assertEqual($parser->getQuery(), 'not(/__default__:asdfasfd/__default__:asdfasf//__default__:asdfasdf) | /__default__:asdfasf/__default__:sadfasf/@asdf');
   }
+
 }

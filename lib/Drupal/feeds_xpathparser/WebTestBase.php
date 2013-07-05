@@ -2,19 +2,32 @@
 
 /**
  * @file
- * Tests for FeedsXPathParserXML.inc.
+ * Contains Drupal\feeds_xpathparser\WebTestBase.
  */
+
+namespace Drupal\feeds_xpathparser;
+
+use Drupal\feeds\FeedsWebTestBase;
 
 /**
  * Test single feeds.
  */
-class FeedsXPathParserWebTestCase extends FeedsWebTestCase {
+class WebTestBase extends FeedsWebTestBase {
+
+  /**
+   * Modules to enable.
+   *
+   * @var array
+   */
+  public static $modules = array(
+    'feeds_xpathparser',
+  );
 
   /**
    * Set up test.
    */
   public function setUp() {
-    parent::setUp('feeds_xpathparser');
+    parent::setUp();
 
     // Set the front page to show 30 nodes so we can easily see what is aggregated.
     $edit = array('default_nodes_main' => 30);
@@ -24,18 +37,21 @@ class FeedsXPathParserWebTestCase extends FeedsWebTestCase {
     // text on nodes will fail.
     $edit = array('fields[body][type]' => 'text_default');
     $this->drupalPost('admin/structure/types/manage/article/display/teaser', $edit, 'Save');
-
-    // Generalize across my version of feeds and the standard one.
-    $items = feeds_ui_menu();
-    if (isset($items['admin/structure/feeds/%feeds_importer/edit'])) {
-      $this->feeds_base = 'admin/structure/feeds';
-    }
-    else {
-      $this->feeds_base = 'admin/structure/feeds/edit';
-    }
   }
 
-  function postAndCheck($url, $edit, $button, $saved_text) {
+  /**
+   * Posts to a URL and checks the field values.
+   *
+   * @param string $url
+   *   The url to POST to.
+   * @param array $edit
+   *   The form values.
+   * @param string $button
+   *   The button to press.
+   * @param string $saved_text
+   *   The save message text.
+   */
+  protected function postAndCheck($url, $edit, $button, $saved_text) {
     $this->drupalPost($url, $edit, $button);
     $this->assertText($saved_text);
     $this->drupalGet($url);
@@ -43,4 +59,5 @@ class FeedsXPathParserWebTestCase extends FeedsWebTestCase {
       $this->assertFieldByName($key, $value);
     }
   }
+
 }
