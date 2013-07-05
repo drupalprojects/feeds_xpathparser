@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains Drupal\feeds_xpathparser\Tests\FeedsXPathParseHTMLTestCase.
+ * Contains Drupal\feeds_xpathparser\Tests\FeedsXPathParserQueryParserTestCase.
  */
 
 namespace Drupal\feeds_xpathparser\Tests;

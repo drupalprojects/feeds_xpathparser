@@ -5,6 +5,8 @@
  * Contains \Druapl\feeds_xpathparser\FeedsXPathParserDOMXPath.
  */
 
+namespace Drupal\feeds_xpathparser;
+
 /**
  * Wraps DOMXPath providing enhanced debugging and special namespace handling.
  */
@@ -105,15 +107,15 @@ class FeedsXPathParserDOMXPath extends \DOMXPath {
    *
    * @param string $query
    *   An XPath query.
-   * @param \DOMNode $context
-   *   The current context of the XPath query.
    * @param string $source
    *   The source key for this query.
+   * @param \DOMNode $context
+   *   (optional) The current context of the XPath query. Defaults to null.
    *
    * @return array
    *   An array containing the results of the query.
    */
-  public function namespacedQuery($query, \DOMNode $context, $source) {
+  public function namespacedQuery($query, $source, \DOMNode $context = NULL) {
     $this->addDefaultNamespace($query);
 
     $results = $this->executeQuery($query, $context);

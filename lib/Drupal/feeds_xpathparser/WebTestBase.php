@@ -14,6 +14,8 @@ use Drupal\feeds\FeedsWebTestBase;
  */
 class WebTestBase extends FeedsWebTestBase {
 
+  const FEEDS_BASE = 'admin/structure/feeds/manage';
+
   /**
    * Modules to enable.
    *
@@ -28,10 +30,6 @@ class WebTestBase extends FeedsWebTestBase {
    */
   public function setUp() {
     parent::setUp();
-
-    // Set the front page to show 30 nodes so we can easily see what is aggregated.
-    $edit = array('default_nodes_main' => 30);
-    $this->drupalPost('admin/config/system/site-information', $edit, 'Save configuration');
 
     // Set the teaser length display to unlimited otherwise tests looking for
     // text on nodes will fail.
