@@ -2,77 +2,103 @@
 
 /**
  * @file
- * Provides the base class for FeedsXPathParserHTML and FeedsXPathParserXML.
+ * Contains \Drupal\feeds_xpathparser\FeedsXPathParserBase.
  */
+
+namespace Drupal\feeds_xpathparser;
+
+use Drupal\Core\Form\FormInterface;
+use Drupal\feeds\FeedInterface;
+use Drupal\feeds\FeedPluginFormInterface;
+use Drupal\feeds\FetcherResult;
+use Drupal\feeds\ParserResult;
+use Drupal\feeds\Plugin\ParserBase;
 
 /**
  * Base class for the HTML and XML parsers.
  */
-abstract class FeedsXPathParserBase extends FeedsParser {
+abstract class FeedsXPathParserBase extends ParserBase implements FormInterface, FeedPluginFormInterface {
 
+  /**
+   * The mappings to return raw XML for.
+   *
+   * @var array
+   */
   protected $rawXML = array();
-  protected $doc = NULL;
-  protected $xpath = NULL;
+
+  /**
+   * The DOMDocument to parse.
+   *
+   * @var \DOMDocument
+   */
+  protected $doc;
+
+  /**
+   * The DOMXpath object to use for XPath queries.
+   *
+   * @var \DOMXpath
+   */
+  protected $xpath;
 
   /**
    * Classes that use FeedsXPathParserBase must implement this.
    *
-   * @param array $source_config
+   * @param array $feed_config
    *   The configuration for the source.
-   * @param FeedsFetcherResult $fetcher_result
-   *   A FeedsFetcherResult object.
+   * @param \Drupal\feeds\FetcherResult $fetcher_result
+   *   A FetcherResult object.
    *
-   * @return DOMDocument
+   * @return \DOMDocument
    *   The DOMDocument to perform XPath queries on.
    */
-  abstract protected function setup($source_config, FeedsFetcherResult $fetcher_result);
+  abstract protected function setup(array $feed_config, FetcherResult $fetcher_result);
 
   /**
    * Helper callback to return the raw value.
    *
-   * @param DOMNode $node
+   * @param \DOMNode $node
    *   The DOMNode to convert to a string.
    *
    * @return string
    *   The string representation of the DOMNode.
    */
-  abstract protected function getRaw(DOMNode $node);
+  abstract protected function getRaw(\DOMNode $node);
 
   /**
-   * Implements FeedsParser::parse().
+   * {@inheritdoc}
    */
-  public function parse(FeedsSource $source, FeedsFetcherResult $fetcher_result) {
-    $source_config = $source->getConfigFor($this);
-    $state = $source->state(FEEDS_PARSE);
+  public function parse(FeedInterface $feed, FetcherResult $fetcher_result) {
+    $feed_config = $feed->getConfigFor($this);
+    $state = $feed->state(FEEDS_PARSE);
 
-    if (empty($source_config)) {
-      $source_config = $this->getConfig();
+    if (empty($feed_config)) {
+      $feed_config = $this->getConfig();
     }
 
-    $this->doc = $this->setup($source_config, $fetcher_result);
+    $this->doc = $this->setup($feed_config, $fetcher_result);
 
-    $parser_result = new FeedsParserResult();
+    $parser_result = new ParserResult();
 
     $mappings = $this->getOwnMappings();
-    $this->rawXML = array_keys(array_filter($source_config['rawXML']));
+    $this->rawXML = array_keys(array_filter($feed_config['rawXML']));
     // Set link.
-    $fetcher_config = $source->getConfigFor($source->importer->fetcher);
+    $fetcher_config = $feed->getConfigFor($this->importer->fetcher);
     $parser_result->link = $fetcher_config['source'];
 
     $this->xpath = new FeedsXPathParserDOMXPath($this->doc);
     $config = array();
-    $config['debug'] = array_keys(array_filter($source_config['exp']['debug']));
-    $config['errors'] = $source_config['exp']['errors'];
+    $config['debug'] = array_keys(array_filter($feed_config['exp']['debug']));
+    $config['errors'] = $feed_config['exp']['errors'];
 
     $this->xpath->setConfig($config);
 
-    $context_query = '(' . $source_config['context'] . ')';
+    $context_query = '(' . $feed_config['context'] . ')';
     if (empty($state->total)) {
       $state->total = $this->xpath->namespacedQuery('count(' . $context_query . ')', $this->doc, 'count');
     }
 
     $start = $state->pointer ? $state->pointer : 0;
-    $limit = $start + $source->importer->getLimit();
+    $limit = $start + $this->importer->getLimit();
     $end = ($limit > $state->total) ? $state->total : $limit;
     $state->pointer = $end;
 
@@ -84,12 +110,12 @@ abstract class FeedsXPathParserBase extends FeedsParser {
 
     foreach ($all_nodes as $node) {
       // Invoke a hook to check whether the domnode should be skipped.
-      if (in_array(TRUE, module_invoke_all('feeds_xpathparser_filter_domnode', $node, $this->doc, $source), TRUE)) {
+      if (in_array(TRUE, module_invoke_all('feeds_xpathparser_filter_domnode', $node, $this->doc, $feed), TRUE)) {
         continue;
       }
 
       $parsed_item = $variables = array();
-      foreach ($source_config['sources'] as $element_key => $query) {
+      foreach ($feed_config['sources'] as $element_key => $query) {
         // Variable substitution.
         $query = strtr($query, $variables);
         // Parse the item.
@@ -120,7 +146,7 @@ abstract class FeedsXPathParserBase extends FeedsParser {
    *
    * @param string $query
    *   An XPath query.
-   * @param DOMNode $context
+   * @param \DOMNode $context
    *   The current context DOMNode .
    * @param string $source
    *   The name of the source for this query.
@@ -136,9 +162,9 @@ abstract class FeedsXPathParserBase extends FeedsParser {
 
     $node_list = $this->xpath->namespacedQuery($query, $context, $source);
 
-    // Iterate through the results of the XPath query.  If this source is
+    // Iterate through the results of the XPath query. If this source is
     // configured to return raw xml, make it so.
-    if ($node_list instanceof DOMNodeList) {
+    if ($node_list instanceof \DOMNodeList) {
       $results = array();
       if (in_array($source, $this->rawXML)) {
         foreach ($node_list as $node) {
@@ -169,29 +195,29 @@ abstract class FeedsXPathParserBase extends FeedsParser {
   }
 
   /**
-   * Overrides parent::sourceForm().
+   * {@inheritdoc}
    */
-  public function sourceForm($source_config) {
-    $form = array();
-    $importer = feeds_importer($this->id);
-    $importer_config = $importer->getConfig();
-    $mappings_ = $importer->processor->getMappings();
+  public function feedForm(array $form, array &$form_state, FeedInterface $feed) {
+    $importer_config = $this->importer->getConfig();
+    $mappings_ = $this->importer->processor->getMappings();
 
-    if (empty($source_config)) {
-      $source_config = $this->getConfig();
+    $feed_config = $feed->getConfigFor($this);
+
+    if (empty($feed_config)) {
+      $feed_config = $this->getConfig();
     }
 
-    if (isset($source_config['allow_override']) &&
-        !$source_config['allow_override'] &&
-        empty($source_config['config'])) {
+    if (isset($feed_config['allow_override']) &&
+        !$feed_config['allow_override'] &&
+        empty($feed_config['config'])) {
       return;
     }
 
     // Add extensions that might get importerd.
-    $allowed_extensions = isset($importer_config['fetcher']['config']['allowed_extensions']) ? $importer_config['fetcher']['config']['allowed_extensions'] : FALSE;
+    $allowed_extensions = isset($importer_config['fetcher']['config']['allowed_extensions']) ? $this->importer_config['fetcher']['config']['allowed_extensions'] : FALSE;
     if ($allowed_extensions) {
       if (strpos($allowed_extensions, 'html') === FALSE) {
-        $importer->fetcher->config['allowed_extensions'] .= ' html htm';
+        $this->importer->fetcher->config['allowed_extensions'] .= ' html htm';
       }
     }
 
@@ -206,7 +232,11 @@ abstract class FeedsXPathParserBase extends FeedsParser {
         }
       }
     }
-    $form['xpath'] = array(
+
+    $form['parser']['#tree'] = TRUE;
+    $parser_form =& $form['parser'];
+
+    $parser_form['xpath'] = array(
       '#type' => 'fieldset',
       '#tree' => TRUE,
       '#title' => t('XPath Parser Settings'),
@@ -223,19 +253,19 @@ abstract class FeedsXPathParserBase extends FeedsParser {
       else {
         $feeds_base = 'admin/structure/feeds/';
       }
-      $form['xpath']['error_message']['#markup'] = '<div class="help">' . t('No XPath mappings are defined. Define mappings !link.', array('!link' => l(t('here'), $feeds_base . $this->id . '/mapping'))) . '</div><br />';
+      $parser_form['xpath']['error_message']['#markup'] = '<div class="help">' . t('No XPath mappings are defined. Define mappings !link.', array('!link' => l(t('here'), $feeds_base . $this->id . '/mapping'))) . '</div><br />';
       return $form;
     }
-    $form['xpath']['context'] = array(
+    $parser_form['xpath']['context'] = array(
       '#type' => 'textfield',
       '#title' => t('Context'),
       '#required' => TRUE,
       '#description' => t('This is the base query, all other queries will run in this context.'),
-      '#default_value' => isset($source_config['context']) ? $source_config['context'] : '',
+      '#default_value' => isset($feed_config['context']) ? $feed_config['context'] : '',
       '#maxlength' => 1024,
       '#size' => 80,
     );
-    $form['xpath']['sources'] = array(
+    $parser_form['xpath']['sources'] = array(
       '#type' => 'fieldset',
       '#tree' => TRUE,
     );
@@ -247,15 +277,15 @@ abstract class FeedsXPathParserBase extends FeedsParser {
           t('Fields <strong>!columns</strong> are mandatory and values in these columns are considered unique: only one entry per value in one of these columns will be created.',
             array('!columns' => implode(', ', $uniques)))),
       );
-      $form['xpath']['sources']['help']['#markup'] = '<div class="help">' . theme('item_list', array('items' => $items)) . '</div>';
+      $parser_form['xpath']['sources']['help']['#markup'] = '<div class="help">' . theme('item_list', array('items' => $items)) . '</div>';
     }
     $variables = array();
     foreach ($mappings as $source => $target) {
-      $form['xpath']['sources'][$source] = array(
+      $parser_form['xpath']['sources'][$source] = array(
         '#type' => 'textfield',
         '#title' => check_plain($target),
         '#description' => t('The XPath query to run.'),
-        '#default_value' => isset($source_config['sources'][$source]) ? $source_config['sources'][$source] : '',
+        '#default_value' => isset($feed_config['sources'][$source]) ? $feed_config['sources'][$source] : '',
         '#maxlength' => 1024,
         '#size' => 80,
       );
@@ -264,41 +294,41 @@ abstract class FeedsXPathParserBase extends FeedsParser {
           t('The variable %variable is available for replacement.', array('%variable' => implode(', ', $variables))),
           t('The variables %variable are available for replacement.', array('%variable' => implode(', ', $variables)))
         );
-        $form['xpath']['sources'][$source]['#description'] .= '<br />' . $variable_text;
+        $parser_form['xpath']['sources'][$source]['#description'] .= '<br />' . $variable_text;
       }
       $variables[] = '$' . $target;
     }
-    $form['xpath']['rawXML'] = array(
+    $parser_form['xpath']['rawXML'] = array(
       '#type' => 'checkboxes',
       '#title' => t('Select the queries you would like to return raw XML or HTML'),
       '#options' => $mappings,
-      '#default_value' => isset($source_config['rawXML']) ? $source_config['rawXML'] : array(),
+      '#default_value' => isset($feed_config['rawXML']) ? $feed_config['rawXML'] : array(),
     );
-    $form['xpath']['exp'] = array(
+    $parser_form['xpath']['exp'] = array(
       '#type' => 'fieldset',
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
       '#tree' => TRUE,
       '#title' => t('Debug Options'),
     );
-    $form['xpath']['exp']['errors'] = array(
+    $parser_form['xpath']['exp']['errors'] = array(
       '#type' => 'checkbox',
       '#title' => t('Show error messages.'),
-      '#default_value' => isset($source_config['exp']['errors']) ? $source_config['exp']['errors'] : FALSE,
+      '#default_value' => isset($feed_config['exp']['errors']) ? $feed_config['exp']['errors'] : FALSE,
     );
     if (extension_loaded('tidy')) {
-      $form['xpath']['exp']['tidy'] = array(
+      $parser_form['xpath']['exp']['tidy'] = array(
         '#type' => 'checkbox',
         '#title' => t('Use Tidy'),
         '#description' => t('The Tidy PHP extension has been detected.
                               Select this to clean the markup before parsing.'),
-        '#default_value' => isset($source_config['exp']['tidy']) ? $source_config['exp']['tidy'] : FALSE,
+        '#default_value' => isset($feed_config['exp']['tidy']) ? $feed_config['exp']['tidy'] : FALSE,
       );
-      $form['xpath']['exp']['tidy_encoding'] = array(
+      $parser_form['xpath']['exp']['tidy_encoding'] = array(
         '#type' => 'textfield',
         '#title' => t('Tidy encoding'),
         '#description' => t('Set the encoding for tidy. See the !phpdocs for possible values.', array('!phpdocs' => l(t('PHP docs'), 'http://www.php.net/manual/en/tidy.parsestring.php/'))),
-        '#default_value' => isset($source_config['exp']['tidy_encoding']) ? $source_config['exp']['tidy_encoding'] : 'UTF8',
+        '#default_value' => isset($feed_config['exp']['tidy_encoding']) ? $feed_config['exp']['tidy_encoding'] : 'UTF8',
         '#states' => array(
           'visible' => array(
             ':input[name$="[tidy]"]' => array(
@@ -308,22 +338,23 @@ abstract class FeedsXPathParserBase extends FeedsParser {
         ),
       );
     }
-    $form['xpath']['exp']['debug'] = array(
+    $parser_form['xpath']['exp']['debug'] = array(
       '#type' => 'checkboxes',
       '#title' => t('Debug query'),
       '#options' => array_merge(array('context' => 'context'), $mappings),
-      '#default_value' => isset($source_config['exp']['debug']) ? $source_config['exp']['debug'] : array(),
+      '#default_value' => isset($feed_config['exp']['debug']) ? $feed_config['exp']['debug'] : array(),
     );
+
     return $form;
   }
 
   /**
-   * Overrides parent::configForm().
+   * {@inheritdoc}
    */
-  public function configForm(&$form_state) {
+  public function buildForm(array $form, array &$form_state) {
     $config = $this->getConfig();
     $config['config'] = TRUE;
-    $form = $this->sourceForm($config);
+    $form = $this->feedForm($config);
     $form['xpath']['context']['#required'] = FALSE;
     $form['xpath']['#collapsed'] = FALSE;
     $form['xpath']['allow_override'] = array(
@@ -337,14 +368,14 @@ abstract class FeedsXPathParserBase extends FeedsParser {
   }
 
   /**
-   * Overrides parent::sourceDefaults().
+   * {@inheritdoc}
    */
   public function sourceDefaults() {
     return array();
   }
 
   /**
-   * Overrides parent::configDefaults().
+   * {@inheritdoc}
    */
   public function configDefaults() {
     return array(
@@ -362,12 +393,12 @@ abstract class FeedsXPathParserBase extends FeedsParser {
   }
 
   /**
-   * Overrides parent::sourceFormValidate().
+   * Overrides parent::feedFormValidate().
    *
    * If the values of this source are the same as the base config we set them to
    * blank so that the values will be inherited from the importer defaults.
    */
-  public function sourceFormValidate(&$values) {
+  public function feedFormValidate(array $form, array &$form_state, FeedInterface $feed) {
     $config = $this->getConfig();
     $values = $values['xpath'];
     $allow_override = $config['allow_override'];
@@ -383,19 +414,19 @@ abstract class FeedsXPathParserBase extends FeedsParser {
   }
 
   /**
-   * Overrides parent::sourceFormValidate().
+   * {@inheritdoc}
    */
-  public function configFormValidate(&$values) {
+  public function validateForm(array $form, arary &$form_state) {
     $mappings = $this->getOwnMappings();
 
-    // This tests if we're validating configForm or sourceForm.
+    // This tests if we're validating configForm or feedForm.
     $config_form = FALSE;
     if (isset($values['xpath'])) {
       $values = $values['xpath'];
       $config_form = TRUE;
     }
     $class = get_class($this);
-    $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?>' . "\n<items></items>");
+    $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?>' . "\n<items></items>");
     $use_errors = $this->errorStart();
 
     $values['context'] = trim($values['context']);
@@ -448,7 +479,7 @@ abstract class FeedsXPathParserBase extends FeedsParser {
   }
 
   /**
-   * Overrides parent::getMappingSources().
+   * {@inheritdoc}
    */
   public function getMappingSources() {
     $mappings = $this->getOwnMappings();
@@ -463,6 +494,7 @@ abstract class FeedsXPathParserBase extends FeedsParser {
       }
       $next++;
     }
+
     return array(
       'xpathparser:' . $next => array(
         'name' => t('XPath Expression'),
@@ -480,7 +512,7 @@ abstract class FeedsXPathParserBase extends FeedsParser {
    *   An array of mappings keyed source => target.
    */
   protected function getOwnMappings() {
-    return $this->filterMappings(feeds_importer($this->id)->processor->getMappings());
+    return $this->filterMappings($this->importer->processor->getMappings());
   }
 
   /**
