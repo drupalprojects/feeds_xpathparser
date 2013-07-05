@@ -175,7 +175,7 @@ abstract class FeedsXPathParserBase extends FeedsParser {
     $form = array();
     $importer = feeds_importer($this->id);
     $importer_config = $importer->getConfig();
-    $mappings_ = $importer_config['processor']['config']['mappings'];
+    $mappings_ = $importer->processor->getMappings();
 
     if (empty($source_config)) {
       $source_config = $this->getConfig();
@@ -195,7 +195,9 @@ abstract class FeedsXPathParserBase extends FeedsParser {
       }
     }
 
-    $uniques = $mappings = array();
+    $uniques = array();
+    $mappings = $this->getOwnMappings();
+
     foreach ($mappings_ as $mapping) {
       if (strpos($mapping['source'], 'xpathparser:') === 0) {
         $mappings[$mapping['source']] = $mapping['target'];
@@ -449,7 +451,7 @@ abstract class FeedsXPathParserBase extends FeedsParser {
    * Overrides parent::getMappingSources().
    */
   public function getMappingSources() {
-    $mappings = $this->filterMappings(feeds_importer($this->id)->processor->config['mappings']);
+    $mappings = $this->getOwnMappings();
     $next = 0;
     if (!empty($mappings)) {
       // Mappings can be re-ordered, so find the max.
@@ -478,8 +480,7 @@ abstract class FeedsXPathParserBase extends FeedsParser {
    *   An array of mappings keyed source => target.
    */
   protected function getOwnMappings() {
-    $importer_config = feeds_importer($this->id)->getConfig();
-    return $this->filterMappings($importer_config['processor']['config']['mappings']);
+    return $this->filterMappings(feeds_importer($this->id)->processor->getMappings());
   }
 
   /**
@@ -491,7 +492,7 @@ abstract class FeedsXPathParserBase extends FeedsParser {
    * @return array
    *   An array of mappings keyed source => target.
    */
-  protected function filterMappings($mappings) {
+  protected function filterMappings(array $mappings) {
     $our_mappings = array();
     foreach ($mappings as $mapping) {
       if (strpos($mapping['source'], 'xpathparser:') === 0) {
