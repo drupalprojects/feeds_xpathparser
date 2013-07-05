@@ -1,41 +1,52 @@
 <?php
 
 /**
- * @files
- * Provides the FeedsXPathParserXML class.
+ * @file
+ * Contains \Drupal\feeds_xpathparser\Plugin\feeds\Parser\FeedsXPathParserXML.
  */
+
+namespace Drupal\feeds_xpathparser\Plugin\feeds\Parser;
+
+use Drupal\feeds\FetcherResultInterface;
+use Drupal\feeds_xpathparser\FeedsXPathParserBase;
+
 class FeedsXPathParserXML extends FeedsXPathParserBase {
 
   /**
-   * Implements FeedsXPathParserBase::setup().
+   * {@inheritdoc}
    */
-  protected function setup($source_config, FeedsFetcherResult $fetcher_result) {
+  protected function setup(array $feed_config, FetcherResultInterface $fetcher_result) {
 
-    if (!empty($source_config['exp']['tidy'])) {
+    if (!empty($feed_config['exp']['tidy'])) {
       $config = array(
         'input-xml' => TRUE,
         'wrap'      => 0,
         'tidy-mark' => FALSE,
       );
       // Default tidy encoding is UTF8.
-      $encoding = $source_config['exp']['tidy_encoding'];
+      $encoding = $feed_config['exp']['tidy_encoding'];
       $raw = tidy_repair_string(trim($fetcher_result->getRaw()), $config, $encoding);
     }
     else {
       $raw = $fetcher_result->getRaw();
     }
-    $doc = new DOMDocument();
+    $doc = new \DOMDocument();
     $use = $this->errorStart();
     $success = $doc->loadXML($raw);
     unset($raw);
-    $this->errorStop($use, $source_config['exp']['errors']);
+    $this->errorStop($use, $feed_config['exp']['errors']);
     if (!$success) {
-      throw new Exception(t('There was an error parsing the XML document.'));
+      throw new \RuntimeException(t('There was an error parsing the XML document.'));
     }
+
     return $doc;
   }
 
-  protected function getRaw(DOMNode $node) {
+  /**
+   * {@inheritdoc}
+   */
+  protected function getRaw(\DOMNode $node) {
     return $this->doc->saveXML($node);
   }
+
 }

@@ -54,7 +54,7 @@ abstract class FeedsXPathParserBase extends ParserBase implements FormInterface,
   abstract protected function setup(array $feed_config, FetcherResult $fetcher_result);
 
   /**
-   * Helper callback to return the raw value.
+   * Returns the raw node value.
    *
    * @param \DOMNode $node
    *   The DOMNode to convert to a string.
