@@ -1,120 +1,194 @@
 <?php
 
 /**
- * @file
- * Pseudo-parser of XPath queries.  When an XML document has a default
- * namespace this gets called so that adding the __default__ namepace where
- * appropriate. Aren't we nice?
+ * @file Contains \Drupal\feeds_xpathparser\FeedsXPathParserQueryParser.
+ */
+
+namespace Drupal\feeds_xpathparser;
+
+/**
+ * Pseudo-parser of XPath queries.
+ *
+ * When an XML document has a default namespace this gets called so that adding
+ * the __default__ namepace where appropriate.
+ *
+ * Aren't we nice?
+ *
+ * @param string $query
+ *   An XPath query string.
+ *
+ * @return string
+ *   An XPath query string with the __default__ namespace added.
  *
  * @todo
  *   Cleanup.
- * @param $query
- *   An XPath query string.
- * @return string
- *   An XPath query string with the __default__ namespace added.
  */
 class FeedsXPathParserQueryParser {
-  function __construct($query) {
-    $this->query = preg_replace('/\s+\(\s*/', '(', $query);
 
-    $this->word_boundaries = array(
-      '[', ']', '=', '(', ')', '.', '<', '>', '*', '!', '|', '/', ',', ' ', ':',
-    );
-    $this->in_quotes = FALSE;
-    $this->quote_char = '';
-    $this->word = '';
-    $this->output = '';
-    $this->prev_boundary = '';
-    $this->axis = '';
-    $this->skip_next_word = FALSE;
-    $this->start();
+  /**
+   * Characters that represent word boundaries.
+   *
+   * @var array
+   */
+  protected $wordBoundaries = array(
+    '[', ']', '=', '(', ')', '.', '<', '>', '*', '!', '|', '/', ',', ' ', ':',
+  );
+
+  /**
+   * The XPath query to modify.
+   *
+   * @var string
+   */
+  protected $query;
+
+  /**
+   * The parsing index.
+   *
+   * @var int
+   */
+  protected $i;
+
+  protected $inQuotes = FALSE;
+  protected $quoteChar = '';
+  protected $word = '';
+  protected $output = '';
+  protected $prevBoundary = '';
+  protected $axis = '';
+  protected $skipNextWord = FALSE;
+
+  /**
+   * Constructs a FeedsXPathParserQueryParser object.
+   *
+   * @param string $query
+   *   The input XPath query string.
+   */
+  public function __construct($query) {
+
+    // Normalize space.
+    $this->query = preg_replace('/\s+\(\s*/', '(', $query);
   }
 
-  function start() {
-    for ($i=0; $i < drupal_strlen($this->query); $i++) {
+  /**
+   * Returns the modified XPath query.
+   *
+   * @return string
+   *   A modified XPath query.
+   */
+  public function getQuery() {
+    $this->start();
+    return $this->output;
+  }
+
+  /**
+   * Begin parsing.
+   */
+  protected function start() {
+    for ($i = 0; $i < drupal_strlen($this->query); $i++) {
       $this->i = $i;
       $c = $this->query[$i];
 
-      if ($c == '"' || $c == "'") {
-        $this->handle_quote($c);
+      if ($c === '"' || $c === "'") {
+        $this->handleQuote($c);
         continue;
       }
-      if ($this->in_quotes) {
+      if ($this->inQuotes) {
         $this->word .= $c;
         continue;
       }
 
-      if (in_array($c, $this->word_boundaries)) {
-        $this->handle_word_boundary($c);
+      if (in_array($c, $this->wordBoundaries)) {
+        $this->handleWordBoundary($c);
       }
       else {
         $this->word .= $c;
       }
     }
-    $this->handle_word();
+    $this->handleWord();
   }
 
-  function handle_quote($c) {
-    if ($this->in_quotes && $c == $this->quote_char) {
-      $this->in_quotes = FALSE;
+  /**
+   * Handles quote pairs.
+   */
+  protected function handleQuote($c) {
+    if ($this->inQuotes && $c === $this->quoteChar) {
+      $this->inQuotes = FALSE;
       $this->word .= $c;
       $this->output .= $this->word;
       $this->word = '';
     }
-    elseif (!$this->in_quotes) {
-      $this->in_quotes = TRUE;
-      $this->handle_word();
+    elseif (!$this->inQuotes) {
+      $this->inQuotes = TRUE;
+      $this->handleWord();
       $this->word = $c;
-      $this->quote_char = $c;
+      $this->quoteChar = $c;
     }
     else {
       $this->word .= $c;
     }
   }
 
-  function handle_word_boundary($c) {
+  /**
+   * Handles word boundaries.
+   *
+   * @param string $c
+   *   One character.
+   */
+  protected function handleWordBoundary($c) {
     if (in_array($this->word, array('div', 'or', 'and', 'mod')) &&
-        $this->prev_boundary == ' ' && $c == ' ') {
+        $this->prevBoundary === ' ' && $c === ' ') {
       $this->output .= $this->word;
     }
     else {
-      $this->handle_word($c);
+      $this->handleWord($c);
     }
+
     $this->output .= $c;
     $this->word = '';
-    $this->prev_boundary = $c;
+    $this->prevBoundary = $c;
   }
 
-  function handle_word($c='') {
-    if ($this->word == '') {
+  /**
+   * Handles one word.
+   *
+   * @param string $c
+   *   (optional) A single character. Defaults to an empty string.
+   */
+  protected function handleWord($c = '') {
+    if ($this->word === '') {
       return;
     }
-    if ($c == ':' && $this->query[$this->i + 1] == ':') {
+
+    if ($c === ':' && $this->query[$this->i + 1] === ':') {
       $this->axis = $this->word;
     }
-    if ($c == ':' && $this->query[$this->i - 1] != ':'  &&
-        $this->query[$this->i + 1] != ':') {
+
+    if ($c === ':' && $this->query[$this->i - 1] !== ':'  &&
+        $this->query[$this->i + 1] !== ':') {
       $this->output .= $this->word;
-      $this->skip_next_word = TRUE;
+      $this->skipNextWord = TRUE;
+
       return;
     }
-    if ($this->skip_next_word) {
-      $this->skip_next_word = FALSE;
+
+    if ($this->skipNextWord) {
+      $this->skipNextWord = FALSE;
       $this->output .= $this->word;
+
       return;
     }
+
     if (is_numeric($this->word) ||
-        $this->axis == 'attribute' ||
+        $this->axis === 'attribute' ||
         strpos($this->word, '@') === 0 ||
-        $c == '(' ||
-        $c == ':') {
+        $c === '(' ||
+        $c === ':') {
       $this->output .= $this->word;
+
       return;
     }
+
+    // Apply namespace.
     $this->output .= '__default__:' . $this->word;
   }
 
-  function getQuery() {
-    return $this->output;
-  }
 }
