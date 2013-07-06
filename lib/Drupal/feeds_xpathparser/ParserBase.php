@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\feeds_xpathparser\FeedsXPathParserBase.
+ * Contains \Drupal\feeds_xpathparser\ParserBase.
  */
 
 namespace Drupal\feeds_xpathparser;
@@ -12,12 +12,12 @@ use Drupal\feeds\FeedInterface;
 use Drupal\feeds\FeedPluginFormInterface;
 use Drupal\feeds\FetcherResultInterface;
 use Drupal\feeds\FeedsParserResult;
-use Drupal\feeds\Plugin\ParserBase;
+use Drupal\feeds\Plugin\ParserBase as FeedsParserBase;
 
 /**
  * Base class for the HTML and XML parsers.
  */
-abstract class FeedsXPathParserBase extends ParserBase implements FormInterface, FeedPluginFormInterface {
+abstract class ParserBase extends FeedsParserBase implements FormInterface, FeedPluginFormInterface {
 
   /**
    * The mappings to return raw XML for.
@@ -41,7 +41,7 @@ abstract class FeedsXPathParserBase extends ParserBase implements FormInterface,
   protected $xpath;
 
   /**
-   * Classes that use FeedsXPathParserBase must implement this.
+   * Classes that use ParserBase must implement this.
    *
    * @param array $feed_config
    *   The configuration for the source.
@@ -87,7 +87,7 @@ abstract class FeedsXPathParserBase extends ParserBase implements FormInterface,
     $fetcher_config = $feed->getConfigFor($this->importer->fetcher);
     $parser_result->link = $fetcher_config['source'];
 
-    $this->xpath = new FeedsXPathParserDOMXPath($this->doc);
+    $this->xpath = new DOMXPath($this->doc);
     $config = array();
     $config['debug'] = array_keys(array_filter($feed_config['debug']));
     $config['errors'] = $feed_config['errors'];

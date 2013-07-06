@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Druapl\feeds_xpathparser\FeedsXPathParserDOMXPath.
+ * Contains \Druapl\feeds_xpathparser\DOMXPath.
  */
 
 namespace Drupal\feeds_xpathparser;
@@ -10,7 +10,7 @@ namespace Drupal\feeds_xpathparser;
 /**
  * Wraps DOMXPath providing enhanced debugging and special namespace handling.
  */
-class FeedsXPathParserDOMXPath extends \DOMXPath {
+class DOMXPath extends \DOMXPath {
 
   /**
    * The DOMDocument to parse.
@@ -48,7 +48,7 @@ class FeedsXPathParserDOMXPath extends \DOMXPath {
   protected $error;
 
   /**
-   * Constructs a FeedsXPathParserDOMXPath object.
+   * Constructs a DOMXPath object.
    *
    * @param \DOMDocument $doc
    *   The DOMDocument that we're operating on.
@@ -171,7 +171,7 @@ class FeedsXPathParserDOMXPath extends \DOMXPath {
 
         // Replace all the elements without prefix by the default prefix.
         if (!isset($this->modifiedQueries[$query])) {
-          $parser = new FeedsXPathParserQueryParser($query);
+          $parser = new XPathQueryParser($query);
           $mod_query = $parser->getQuery();
           $this->modifiedQueries[$query] = $mod_query;
           $query = $mod_query;

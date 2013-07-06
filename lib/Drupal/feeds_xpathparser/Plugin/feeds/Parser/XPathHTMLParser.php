@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\feeds_xpathparser\Plugin\feeds\Parser\FeedsXPathParserHTML.
+ * Contains \Drupal\feeds_xpathparser\Plugin\feeds\Parser\XPathHTMLParser.
  */
 
 namespace Drupal\feeds_xpathparser\Plugin\feeds\Parser;
@@ -10,7 +10,7 @@ namespace Drupal\feeds_xpathparser\Plugin\feeds\Parser;
 use Drupal\Component\Annotation\Plugin;
 use Drupal\Core\Annotation\Translation;
 use Drupal\feeds\FetcherResultInterface;
-use Drupal\feeds_xpathparser\FeedsXPathParserBase;
+use Drupal\feeds_xpathparser\ParserBase;
 
 /**
  * Defines an HTML feed parser.
@@ -21,7 +21,7 @@ use Drupal\feeds_xpathparser\FeedsXPathParserBase;
  *   description = @Translation("Parse HTML files using XPath.")
  * )
  */
-class FeedsXPathParserHTML extends FeedsXPathParserBase {
+class XPathHTMLParser extends ParserBase {
 
   /**
    * {@inheritdoc}

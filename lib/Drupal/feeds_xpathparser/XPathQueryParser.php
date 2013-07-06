@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file Contains \Drupal\feeds_xpathparser\FeedsXPathParserQueryParser.
+ * @file Contains \Drupal\feeds_xpathparser\XPathQueryParser.
  */
 
 namespace Drupal\feeds_xpathparser;
@@ -23,7 +23,7 @@ namespace Drupal\feeds_xpathparser;
  * @todo
  *   Cleanup.
  */
-class FeedsXPathParserQueryParser {
+class XPathQueryParser {
 
   /**
    * Characters that represent word boundaries.
@@ -57,7 +57,7 @@ class FeedsXPathParserQueryParser {
   protected $skipNextWord = FALSE;
 
   /**
-   * Constructs a FeedsXPathParserQueryParser object.
+   * Constructs a XPathQueryParser object.
    *
    * @param string $query
    *   The input XPath query string.

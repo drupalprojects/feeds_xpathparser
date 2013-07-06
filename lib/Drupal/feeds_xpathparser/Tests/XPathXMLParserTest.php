@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains Drupal\feeds_xpathparser\Tests\FeedsXPathParseXMLTestCase.
+ * Contains Drupal\feeds_xpathparser\Tests\XPathXMLParserTest.
  */
 
 namespace Drupal\feeds_xpathparser\Tests;
@@ -12,7 +12,7 @@ use Drupal\feeds_xpathparser\WebTestBase;
 /**
  * Test single feeds.
  */
-class FeedsXPathParserXMLTestCase extends WebTestBase {
+class XPathXMLParserTest extends WebTestBase {
 
   public static function getInfo() {
     return array(
