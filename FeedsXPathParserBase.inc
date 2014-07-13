@@ -213,7 +213,7 @@ abstract class FeedsXPathParserBase extends FeedsParser {
     foreach ($mappings as $source => $target) {
       $form['xpath']['sources'][$source] = array(
         '#type' => 'textfield',
-        '#title' => check_plain($target),
+        '#title' => isset($targets[$target]['name']) ? check_plain($targets[$target]['name']) : check_plain($target),
         '#description' => t('The XPath query to run.'),
         '#default_value' => isset($source_config['sources'][$source]) ? $source_config['sources'][$source] : '',
         '#maxlength' => 1024,
