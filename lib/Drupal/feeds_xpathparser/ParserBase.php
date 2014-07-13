@@ -586,6 +586,7 @@ abstract class ParserBase extends FeedsParserBase implements FormInterface, Feed
    *   The previous value of use_errors.
    */
   protected function errorStart() {
+    libxml_clear_errors();
     return libxml_use_internal_errors(TRUE);
   }
 
