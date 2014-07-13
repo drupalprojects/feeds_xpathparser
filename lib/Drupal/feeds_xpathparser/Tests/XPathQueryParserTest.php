@@ -77,6 +77,9 @@ class XPathQueryParserTest extends UnitTestBase {
     $this->assertEqual($parser->getQuery(), "/*/__default__:article[@id='2']/*[self::__default__:title or self::__default__:short]");
     $parser = new XPathQueryParser('not(/asdfasfd/asdfasf//asdfasdf) | /asdfasf/sadfasf/@asdf');
     $this->assertEqual($parser->getQuery(), 'not(/__default__:asdfasfd/__default__:asdfasf//__default__:asdfasdf) | /__default__:asdfasf/__default__:sadfasf/@asdf');
+
+    $parser = new XPathQueryParser('Ülküdak');
+    $this->assertEqual($parser->getQuery(), '__default__:Ülküdak');
   }
 
 }

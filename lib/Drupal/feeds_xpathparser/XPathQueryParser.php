@@ -85,7 +85,7 @@ class XPathQueryParser {
   protected function start() {
     for ($i = 0; $i < drupal_strlen($this->query); $i++) {
       $this->i = $i;
-      $c = $this->query[$i];
+      $c = drupal_substr($this->query, $i, 1);
 
       if ($c === '"' || $c === "'") {
         $this->handleQuote($c);
@@ -158,12 +158,12 @@ class XPathQueryParser {
       return;
     }
 
-    if ($c === ':' && $this->query[$this->i + 1] === ':') {
+    if ($c === ':' && drupal_substr($this->query, $this->i + 1, 1) === ':') {
       $this->axis = $this->word;
     }
 
-    if ($c === ':' && $this->query[$this->i - 1] !== ':'  &&
-        $this->query[$this->i + 1] !== ':') {
+    if ($c === ':' && drupal_substr($this->query, $this->i - 1, 1) !== ':'  &&
+        drupal_substr($this->query, $this->i + 1, 1) !== ':') {
       $this->output .= $this->word;
       $this->skipNextWord = TRUE;
 
