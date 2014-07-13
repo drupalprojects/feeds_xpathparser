@@ -32,7 +32,7 @@ class FeedsXPathParserXMLTestCase extends FeedsXPathParserWebTestCase {
 
     $this->setPlugin('xpath_xml', 'FeedsXPathParserXML');
     $this->drupalGet($importer_url);
-    $this->assertRaw('<div class="help">FeedsXPathParser: No mappings are defined. Define mappings <a href="/admin/build/feeds/edit/xpath_xml/mapping">here</a>.</div><br />');
+    $this->assertText('FeedsXPathParser: No mappings are defined. Define mappings here.');
     $this->addMappings('xpath_xml',
       array(
         array(
@@ -237,4 +237,5 @@ class FeedsXPathParserXMLTestCase extends FeedsXPathParserWebTestCase {
     $this->assertText('Created 3 Story nodes.');
     $this->drupalGet('node');
   }
+
 }
