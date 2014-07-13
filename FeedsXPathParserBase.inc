@@ -439,6 +439,7 @@ abstract class FeedsXPathParserBase extends FeedsParser {
   }
 
   protected function errorStart() {
+    libxml_clear_errors();
     return libxml_use_internal_errors(TRUE);
   }
 
